@@ -4,7 +4,7 @@
 
 금융·결제·커머스 시스템을 개발해 왔으며, 현재는 개발 표준화와 AI 기반 업무 자동화로 경험을 확장하고 있습니다. 업무 규칙을 코드로 옮기고, 반복 실행해도 신뢰할 수 있는 도구를 만드는 데 집중합니다.
 
-[포트폴리오](index.html) · [이력서](resume.html) · [GitHub](https://github.com/hhj4861)
+[포트폴리오](https://hhj4861.github.io/career-portfolio/) · [이력서](https://hhj4861.github.io/career-portfolio/resume.html) · [GitHub](https://github.com/hhj4861)
 
 ## 대표 프로젝트
 
