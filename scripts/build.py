@@ -19,7 +19,7 @@ resume_css='''<style>body{background:white}main{max-width:880px}.resume-head{pad
 resume=head('홍현종 이력서')+resume_css+'<nav><a href="index.html">← 포트폴리오</a><div class="print-tools"><button class="button print-button" id="print">인쇄 / PDF 저장</button></div></nav><main><header class="resume-head"><h1>홍현종</h1><p>백엔드 · 개발 플랫폼 · AI 업무 자동화</p><a href="'+e(d['github'])+'">github.com/hhj4861</a></header><p class="summary">'+e(d['summary'])+'</p><h2>핵심 기술</h2><p class="summary">'+e(' / '.join(s['body'] for s in d['skills']))+'</p><h2>경력</h2>'+careers()+'<h2>개인 프로젝트</h2>'+''.join('<div class="resume-project"><p class="project-mini"><strong>'+e(p['title'])+'</strong> — '+e(p['subtitle'])+'<br>'+e(p['approach'])+'</p></div>' for p in d['projects'])+'<h2>학력 및 자격</h2><p class="summary">'+e(d['education'])+'<br>'+e(d['certification'])+'</p></main><script src="print.js"></script></body></html>'
 (ROOT/'resume.html').write_text(resume)
 (ROOT/'print.js').write_text("document.getElementById('print').addEventListener('click', () => window.print());\n")
-md='# 홍현종\n\n백엔드 · 개발 플랫폼 · AI 업무 자동화\n\n'+d['summary']+'\n\n[포트폴리오](index.html) · [이력서](resume.html) · [GitHub]('+d['github']+')\n\n## 대표 프로젝트\n\n'
+md='# 홍현종\n\n백엔드 · 개발 플랫폼 · AI 업무 자동화\n\n'+d['summary']+'\n\n[포트폴리오](https://hhj4861.github.io/career-portfolio/) · [이력서](https://hhj4861.github.io/career-portfolio/resume.html) · [GitHub]('+d['github']+')\n\n## 대표 프로젝트\n\n'
 for p in d['projects']:
  md+='### '+p['title']+'\n\n'+p['problem']+'\n\n'+p['approach']+'\n\n'+p['result']+'\n\n'+('[코드 보기]('+p['link']+')\n\n' if p['link'] else '')
 md+='## 경력\n\n'
