@@ -1,0 +1,57 @@
+<section class="section review-demo" id="demo" aria-labelledby="demo-title">
+  <div class="section-title">
+    <div><p class="eyebrow">INTERACTIVE CASE / DB CHANGE REVIEW</p><h2 id="demo-title">분석이 끝나도, 검수는 남아 있습니다</h2></div>
+    <span class="pill">직접 체험하는 설계 원칙</span>
+  </div>
+  <p class="demo-intro">DDL 변경을 고르고, 질문에 답하고, 근거를 확인해 보세요. 재분석해도 미해결 질문은 유지됩니다. 마지막 검수 승인은 사람이 명시적으로 결정합니다.</p>
+  <p class="demo-disclaimer"><strong>일반화된 포트폴리오 데모</strong> · 실제 회사 시스템의 복제가 아닙니다. 모든 DDL·질문·근거는 가상 데이터이며, 네트워크 요청·실제 DB 실행·실운영 성과가 없습니다. 브라우저 메모리에서만 동작하며 새로고침하면 초기화됩니다.</p>
+  <noscript><p class="demo-noscript">이 데모는 JavaScript가 필요합니다. 설계 원칙: 재분석은 미해결 질문을 보존하며, 분석 완료와 사용자 검수 승인을 분리합니다.</p></noscript>
+  <div class="demo-app" data-demo-app hidden>
+    <ol class="demo-steps" aria-label="검수 단계">
+      <li data-demo-step="analysis"><span>01</span> 변경 분석</li>
+      <li data-demo-step="answers"><span>02</span> 질문 답변</li>
+      <li data-demo-step="evidence"><span>03</span> 근거 확인</li>
+      <li data-demo-step="approval"><span>04</span> 사용자 승인</li>
+    </ol>
+    <div class="demo-layout">
+      <div class="demo-source card">
+        <p class="demo-kicker">01 / 변경 요청</p>
+        <label for="demo-scenario">가상 DDL 시나리오</label>
+        <select id="demo-scenario" aria-describedby="demo-scenario-help">
+          <option value="index">인덱스 추가 · 조회 성능</option>
+          <option value="not-null">NOT NULL 변경 · 데이터 정합성</option>
+          <option value="drop-column">컬럼 삭제 · 사용처 확인</option>
+        </select>
+        <p id="demo-scenario-help" class="demo-small">다른 시나리오로 이동해도 각각의 검수 상태는 이 페이지 안에서 유지됩니다.</p>
+        <div class="demo-code-header"><span>change.sql</span><span>가상 PostgreSQL DDL</span></div>
+        <pre class="demo-code"><code id="demo-ddl"></code></pre>
+        <p id="demo-context" class="demo-context"></p>
+        <div class="demo-actions">
+          <button class="button primary" id="demo-analyze" type="button">변경 분석하기</button>
+          <button class="button" id="demo-reset" type="button">이 시나리오 초기화</button>
+        </div>
+        <div class="demo-principle">
+          <strong>분석 완료 ≠ 검수 승인</strong>
+          <p>분석은 질문을 정리합니다. 답변·근거·명시적 승인이 모여야 검수를 마칠 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="demo-review card" aria-labelledby="demo-review-title">
+        <div class="demo-review-head"><div><p class="demo-kicker">02–04 / 검수 기록</p><h3 id="demo-review-title">확인해야 할 질문</h3></div><span id="demo-analysis-badge" class="demo-badge">분석 전</span></div>
+        <div class="demo-metrics" aria-label="검수 진행 상황">
+          <div><span>미해결 질문</span><strong id="demo-unresolved">—</strong></div>
+          <div><span>근거 확인</span><strong id="demo-evidence-count">0 / 0</strong></div>
+          <div><span>검수 승인</span><strong id="demo-approval-state">대기</strong></div>
+        </div>
+        <p id="demo-empty" class="demo-empty">왼쪽의 ‘변경 분석하기’를 누르면 이 변경에 필요한 질문이 생성됩니다.</p>
+        <div id="demo-questions"></div>
+        <div id="demo-approval-panel" class="demo-approval-panel" hidden>
+          <label class="demo-check"><input id="demo-acknowledge" type="checkbox" disabled><span>모든 가상 답변과 근거를 확인했고, 이 검수를 승인하겠습니다</span></label>
+          <button id="demo-approve" class="button primary" type="button" disabled>검수 승인 시뮬레이션</button>
+          <p id="demo-approval-hint" class="demo-small">질문 답변과 근거 확인을 먼저 완료해 주세요.</p>
+        </div>
+      </div>
+    </div>
+    <p id="demo-feedback" class="demo-feedback status" role="status" aria-live="polite" aria-atomic="true">시나리오를 선택하고 변경 분석을 시작해 보세요.</p>
+    <div class="demo-history"><h3>이번 페이지의 검수 이력</h3><ol id="demo-history-list"><li>선택한 시나리오의 활동이 여기에 표시됩니다.</li></ol></div>
+  </div>
+</section>
