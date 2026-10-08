@@ -6,6 +6,7 @@ Source assets (styles.css, demo.js, templates/) are intentionally not overwritte
 from pathlib import Path
 import html
 import json
+import hashlib
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,14 +27,19 @@ def bullets(items):
     return '<ul>' + ''.join(f'<li>{esc(item)}</li>' for item in items) + '</ul>' if items else ''
 
 
+def asset(path):
+    digest = hashlib.sha256((ROOT / path).read_bytes()).hexdigest()[:12]
+    return esc(path) + '?v=' + digest
+
+
 def head(title, resume=False):
     return f'''<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="{esc(DATA['name'])}의 백엔드·개발 플랫폼 경력. 쏘카 업무 사례와 금융·결제·커머스 개발 경험">
 <meta name="color-scheme" content="light">
-<title>{esc(title)}</title><link rel="stylesheet" href="styles.css">
-{'' if resume else '<link rel="stylesheet" href="templates/demo.css">'}
+<title>{esc(title)}</title><link rel="stylesheet" href="{asset('styles.css')}">
+{'' if resume else '<link rel="stylesheet" href="' + asset('templates/demo.css') + '">'}
 </head><body>'''
 
 
@@ -119,7 +125,7 @@ def build_index():
 {demo}
 <section class="section" id="experience">{section_title('03 / EXPERIENCE', '경력과 문제 해결', '회사의 규모나 기술 목록보다 직접 맡은 업무와 해결 과정을 중심으로 살펴보세요.')}{careers()}</section>
 <section class="section" id="personal">{section_title('04 / PERSONAL LAB', '참고 · 개인 프로젝트', '생성 API와 데이터 파이프라인을 탐구한 개인 실험입니다. 회사 성과와 별도로 소개합니다.')}{personal_projects()}</section>
-<section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="demo.js" defer></script></body></html>'''
+<section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="{asset('demo.js')}" defer></script></body></html>'''
 
 
 def build_resume():
@@ -128,7 +134,7 @@ def build_resume():
 <section class="section"><h2>핵심 기술과 경험</h2>{skills()}</section>
 <section class="section" id="experience"><h2>경력 상세</h2>{careers(resume=True)}</section>
 <section class="section"><h2>참고 · 개인 프로젝트</h2>{personal_projects(resume=True)}</section>
-<section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="print.js" defer></script></body></html>'''
+<section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="{asset('print.js')}" defer></script></body></html>'''
 
 
 def build_readme():

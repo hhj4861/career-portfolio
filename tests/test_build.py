@@ -38,7 +38,7 @@ class BuildTests(unittest.TestCase):
             for link in doc.links:
                 if link.startswith('#'): self.assertIn(link[1:],doc.ids)
                 elif not link.startswith(('https://','mailto:')): self.assertTrue((ROOT/link.split('#')[0]).is_file(),link)
-            for asset in doc.assets: self.assertTrue((ROOT/asset).is_file(),asset)
+            for asset in doc.assets: self.assertTrue((ROOT/asset.split('?')[0]).is_file(),asset)
     def test_no_private_data_or_unverified_metrics(self):
         for name in ['profile.json','index.html','resume.html','README.md']:
             content=(ROOT/name).read_text()
@@ -57,6 +57,11 @@ class BuildTests(unittest.TestCase):
                 self.assertNotIn(marker, content)
         self.assertFalse(list(ROOT.glob('*.pdf')))
         self.assertFalse(list(ROOT.glob('*.zip')))
+    def test_assets_have_content_versions(self):
+        for name in ['index.html', 'resume.html']:
+            doc = Document((ROOT / name).read_text())
+            for asset in doc.assets:
+                self.assertRegex(asset, r'\?v=[0-9a-f]{12}$')
     def test_build_is_deterministic(self):
         paths=[ROOT/name for name in ['index.html','resume.html','README.md']]
         before=[p.read_bytes() for p in paths]
