@@ -46,8 +46,8 @@ class BuildTests(unittest.TestCase):
                 self.assertNotIn(private,content)
     def test_progress_state_is_explicit(self):
         p=next(x for x in self.profile['projects'] if x['id']=='db-review')
-        self.assertEqual(p['status'],'검수 진행')
-        self.assertIn('현재 검수 단계',p['result'])
+        self.assertEqual(p['status'],'시범 운영 준비')
+        self.assertIn('시범 운영을 준비',p['result'])
     def test_public_release_excludes_review_material(self):
         self.assertFalse(self.profile.get('review_mode', False))
         self.assertNotIn('review_items', self.profile)
