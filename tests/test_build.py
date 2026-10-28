@@ -62,6 +62,24 @@ class BuildTests(unittest.TestCase):
             doc = Document((ROOT / name).read_text())
             for asset in doc.assets:
                 self.assertRegex(asset, r'\?v=[0-9a-f]{12}$')
+    def test_career_detail_groups_preserve_every_bullet(self):
+        resume=(ROOT/'resume.html').read_text()
+        for career in self.profile['careers']:
+            for project in career['projects']:
+                groups=project.get('bullet_groups', [])
+                if groups:
+                    indices=[i for _, start, end in groups for i in range(start,end)]
+                    self.assertEqual(indices,list(range(len(project['bullets']))))
+                for bullet in project['bullets']:
+                    import html
+                    self.assertIn(html.escape(bullet,quote=True),resume)
+    def test_workbench_replaces_legacy_approval_demo(self):
+        source=(ROOT/'index.html').read_text()
+        for tab in ['dbq','qa','release','logs']:
+            self.assertIn('id="tab-'+tab+'"',source)
+        self.assertNotIn('검수 승인 시뮬레이션',source)
+        self.assertIn('코어 PASS + 개발자 확인 0건',source)
+
     def test_build_is_deterministic(self):
         paths=[ROOT/name for name in ['index.html','resume.html','README.md']]
         before=[p.read_bytes() for p in paths]

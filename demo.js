@@ -1,265 +1,116 @@
-/* Portfolio-only review simulation. Fictional inputs; no requests, storage, or DB execution. */
+/* Original portfolio simulation. Fictional fixtures, no network or persistent storage. */
 (() => {
   'use strict';
-  const root = document.getElementById('demo');
-  if (!root || root.dataset.initialized === 'true') return;
-  root.dataset.initialized = 'true';
-
-  const scenarios = {
-    index: {
-      ddl: '-- 가상 예시 / 실행되지 않습니다\nCREATE INDEX idx_demo_orders_created_at\n  ON demo_orders (created_at);',
-      context: '가상 주문 테이블의 기간별 조회를 위한 인덱스입니다. 조회 패턴과 작업 중 잠금 영향을 따로 확인합니다.',
-      questions: [
-        { id: 'query-plan', title: '추가할 인덱스가 실제 조회 조건과 맞나요?', answer: '가상 실행 계획과 기존 인덱스를 비교했습니다', partial: '인덱스를 추가하면 빨라질 것 같습니다', why: '예상 효과만으로는 조회 조건과 중복 여부를 확인할 수 없습니다.', evidence: '가상 검토 메모 A-01: 기간 조건은 created_at이며 기존 인덱스는 id에만 있습니다. 샘플 실행 계획을 비교했다는 설정입니다. 실제 쿼리·성능 측정 결과가 아닙니다.' },
-        { id: 'lock-window', title: '인덱스 생성 중 잠금 영향을 검토했나요?', answer: '가상 잠금 검토와 작업 중단 기준을 확인했습니다', partial: '트래픽이 적을 때 진행할 예정입니다', why: '작업 시간만 정하면 잠금 영향과 중단 기준은 여전히 미확인입니다.', evidence: '가상 검토 메모 A-02: 샘플 DDL의 잠금 영향을 별도로 검토하고, 검수 시 확인할 중단 기준과 담당자 항목을 준비했다는 설정입니다. 실제 작업 일정이나 운영 기준이 아닙니다.' }
-      ]
-    },
-    'not-null': {
-      ddl: '-- 가상 예시 / 실행되지 않습니다\nALTER TABLE demo_members\n  ALTER COLUMN email SET NOT NULL;',
-      context: '가상 회원 테이블의 이메일을 필수 값으로 바꾸는 변경입니다. 기존 데이터와 신규 쓰기 경로를 모두 확인합니다.',
-      questions: [
-        { id: 'null-rows', title: '기존 NULL 데이터가 남아 있는지 확인했나요?', answer: '가상 NULL 점검과 보정 확인 자료를 검토했습니다', partial: '앞으로 이메일을 필수 입력으로 받을 예정입니다', why: '앞으로의 입력 정책만으로는 기존 데이터의 NULL 여부를 알 수 없습니다.', evidence: '가상 검토 메모 B-01: 샘플 데이터의 NULL 점검 항목과 보정 후 재확인 기록이 준비되었다는 설정입니다. 실제 DB를 조회하거나 데이터를 수정한 결과가 아닙니다.' },
-        { id: 'write-paths', title: 'API와 배치의 쓰기 경로가 새 제약을 지키나요?', answer: '가상 API·배치 입력 조건과 전환 순서를 확인했습니다', partial: '대표 API 한 곳만 확인했습니다', why: '대표 API만 확인하면 배치나 다른 쓰기 경로의 영향은 남습니다.', evidence: '가상 검토 메모 B-02: API와 배치의 입력 조건, 애플리케이션과 스키마의 전환 순서를 함께 점검했다는 설정입니다. 실제 서비스 테스트나 배포 결과가 아닙니다.' }
-      ]
-    },
-    'drop-column': {
-      ddl: '-- 가상 예시 / 실행되지 않습니다\nALTER TABLE demo_orders\n  DROP COLUMN legacy_status;',
-      context: '가상 주문 테이블의 오래된 상태 컬럼을 제거하는 변경입니다. 사용처와 삭제 후 복구 가능성을 질문으로 남깁니다.',
-      questions: [
-        { id: 'dependencies', title: 'API·배치·리포트의 컬럼 사용처를 확인했나요?', answer: '가상 의존성 목록과 사용처 점검을 확인했습니다', partial: '최근 코드에서는 사용하지 않는 것 같습니다', why: '최근 코드만 보면 배치나 리포트 등 다른 의존성이 빠질 수 있습니다.', evidence: '가상 검토 메모 C-01: API·배치·리포트의 의존성 목록을 별도로 확인했다는 설정입니다. 실제 회사의 코드, 시스템 구조, 사용처 정보는 포함하지 않습니다.' },
-        { id: 'restore-plan', title: '삭제된 데이터의 복구 가능성을 검토했나요?', answer: '가상 백업·복구 점검과 중단 기준을 확인했습니다', partial: '문제가 생기면 컬럼을 다시 만들겠습니다', why: '컬럼을 다시 만드는 것만으로는 삭제된 데이터가 복구되지 않습니다.', evidence: '가상 검토 메모 C-02: 백업 자료와 복구 확인 항목, 복구 범위의 한계를 검수했다는 설정입니다. 실제 백업 파일이나 복구 테스트 결과가 아닙니다.' }
-      ]
-    }
+  const fixtures = {
+    schema: {file:'Member.java · 변경 전 → 후', input:'// 가상 JPA 매핑 변경\n// before: membershipLevel 없음\n// after:\n@Column(name = "membership_level",\n  nullable = false, columnDefinition = "INT DEFAULT 0")\nprivate Integer membershipLevel;',sql:'ALTER TABLE demo_member\n  ADD COLUMN membership_level INT NOT NULL DEFAULT 0;',question:'기존 회원에게 적용되는 기본값 0의 업무 의미는 무엇인가요?', fact:'가상 기획서: 기존 회원은 일반 등급이며, 0은 일반 등급을 뜻합니다.'},
+    dml: {file:'change.sql',input:'-- 가상 예시 · 실행하지 않습니다\nUPDATE demo_coupon\nSET enabled = 0\nWHERE campaign_id = 42;',sql:'UPDATE demo_coupon SET enabled = 0\nWHERE campaign_id = 42;',question:'변경하려는 캠페인과 상태값의 기대값을 원천 업무 자료로 확인해 주세요.',fact:'가상 운영 요청서: 종료된 캠페인 42의 쿠폰을 비활성화하며, 비활성 코드는 0입니다.'},
+    unknown: {file:'CouponRepository.java',input:'// 가상 예시 · 설정과 분기 정보 누락\nString sql = "UPDATE " + tableName\n  + " SET enabled = :state WHERE " + filter;',sql:'UPDATE demo_coupon SET enabled = 0\nWHERE campaign_id = 42;',question:'확정한 대상 캠페인과 상태값의 업무 근거가 필요합니다.',fact:'가상 운영 요청서: 종료된 캠페인 42의 쿠폰을 비활성화하며, 비활성 코드는 0입니다.'},
+    none: {file:'docs/README.md',input:'- 빌드 안내\n+ 로컬 빌드·실행 안내\n\nDB 스키마·쿼리·설정 변경 없음',sql:'',question:'',fact:''}
   };
-  const blank = () => ({ runs: 0, answers: {}, evidence: {}, opened: {}, acknowledged: false, approved: false, history: [] });
-  const states = Object.fromEntries(Object.keys(scenarios).map(key => [key, blank()]));
-  const el = id => root.querySelector(`#demo-${id}`);
-  const elements = Object.fromEntries(['scenario', 'ddl', 'context', 'analyze', 'reset', 'analysis-badge', 'unresolved', 'evidence-count', 'approval-state', 'empty', 'questions', 'approval-panel', 'acknowledge', 'approve', 'approval-hint', 'feedback', 'history-list'].map(id => [id, el(id)]));
-  let active = 'index';
-  let busy = false;
-  let timer = null;
-  let generation = 0;
-  const current = () => states[active];
-  const questionId = (id, suffix) => `demo-${active}-${id}-${suffix}`;
-  const count = () => {
-    const state = current();
-    const questions = scenarios[active].questions;
-    return {
-      total: questions.length,
-      answered: questions.filter(q => state.answers[q.id] === 'complete').length,
-      evidence: questions.filter(q => state.answers[q.id] === 'complete' && state.evidence[q.id]).length
-    };
-  };
-  const announce = text => { elements.feedback.textContent = text; };
-  const record = text => {
-    current().history.unshift(text);
-    // Bound the visible, in-memory log even when controls are used repeatedly.
-    current().history = current().history.slice(0, 6);
-  };
-  const invalidateApproval = () => { current().acknowledged = false; current().approved = false; };
-  const cancelAnalysis = () => { generation += 1; clearTimeout(timer); timer = null; busy = false; };
-  const textNode = (tag, className, text) => {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    node.textContent = text;
-    return node;
-  };
-
-  function buildQuestions() {
-    elements.questions.replaceChildren();
-    if (!current().runs) return;
-    for (const [index, q] of scenarios[active].questions.entries()) {
-      const article = textNode('article', 'demo-question', '');
-      article.dataset.question = q.id;
-      const top = textNode('div', 'demo-question-top', '');
-      const heading = textNode('h4', '', `Q${index + 1}. ${q.title}`);
-      heading.id = questionId(q.id, 'title');
-      article.setAttribute('aria-labelledby', heading.id);
-      const badge = textNode('span', 'demo-question-state', '미해결');
-      badge.dataset.field = 'badge';
-      top.append(heading, badge);
-      const label = textNode('label', 'demo-answer-label', '제공된 샘플 답변 선택');
-      label.htmlFor = questionId(q.id, 'answer');
-      const select = document.createElement('select');
-      select.id = label.htmlFor;
-      select.dataset.action = 'answer';
-      select.setAttribute('aria-labelledby', `${heading.id} ${label.htmlFor}-label`);
-      label.id = `${label.htmlFor}-label`;
-      select.setAttribute('aria-describedby', questionId(q.id, 'feedback'));
-      [['', '답변을 선택해 주세요'], ['partial', q.partial], ['complete', q.answer]].forEach(([value, text]) => {
-        const option = textNode('option', '', text);
-        option.value = value;
-        select.append(option);
-      });
-      const feedback = textNode('p', 'demo-answer-feedback', '');
-      feedback.id = questionId(q.id, 'feedback');
-      feedback.dataset.field = 'feedback';
-      const show = textNode('button', 'demo-evidence-toggle', '가상 근거 보기');
-      show.type = 'button';
-      show.dataset.action = 'toggle-evidence';
-      show.setAttribute('aria-controls', questionId(q.id, 'evidence'));
-      show.setAttribute('aria-expanded', 'false');
-      show.setAttribute('aria-label', `Q${index + 1} 가상 근거 보기`);
-      const evidence = textNode('div', 'demo-evidence', '');
-      evidence.id = questionId(q.id, 'evidence');
-      evidence.hidden = true;
-      evidence.append(textNode('p', 'demo-evidence-label', 'FICTIONAL EVIDENCE / 설명용 샘플'), textNode('p', '', q.evidence));
-      const checkLabel = textNode('label', 'demo-check', '');
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.id = questionId(q.id, 'checked');
-      checkbox.dataset.action = 'check-evidence';
-      checkbox.setAttribute('aria-label', `Q${index + 1} 가상 답변에 연결된 근거 확인`);
-      checkLabel.append(checkbox, textNode('span', '', '이 가상 답변에 연결된 근거를 확인했습니다'));
-      evidence.append(checkLabel);
-      article.append(top, label, select, feedback, show, evidence);
-      elements.questions.append(article);
-    }
+  const blank = () => ({runs:0,answer:'',applied:false,sourceFixed:false,next:0});
+  function dbResult(kind,state) {
+    if (!state.runs) return {verdict:'—',pending:null,ready:false,type:'idle'};
+    if (kind==='none') return {verdict:'미실행',pending:0,ready:false,type:'none'};
+    if (kind==='unknown'&&!state.sourceFixed) return {verdict:'미실행',pending:null,ready:false,type:'unknown'};
+    return {verdict:'PASS',pending:state.applied?0:1,ready:state.applied,type:'review'};
   }
-
-  function render() {
-    const state = current();
-    const counts = count();
-    const answered = counts.answered === counts.total;
-    const ready = state.runs > 0 && answered && counts.evidence === counts.total;
-    elements['analysis-badge'].textContent = busy ? '분석 중' : state.runs ? `분석 완료 · ${state.runs}회` : '분석 전';
-    elements['analysis-badge'].classList.toggle('is-analyzed', state.runs > 0 && !busy);
-    elements.analyze.textContent = busy ? '분석 중…' : state.runs ? '재분석 · 질문 유지' : '변경 분석하기';
-    elements.analyze.disabled = busy;
-    elements.unresolved.textContent = state.runs ? `${counts.total - counts.answered}개` : '—';
-    elements['evidence-count'].textContent = state.runs ? `${counts.evidence} / ${counts.total}` : '0 / 0';
-    elements['approval-state'].textContent = state.approved ? '승인됨' : '대기';
-    elements.empty.hidden = state.runs > 0;
-    elements['approval-panel'].hidden = !state.runs;
-    elements.questions.setAttribute('aria-busy', String(busy));
-    for (const q of scenarios[active].questions) {
-      const article = elements.questions.querySelector(`[data-question="${q.id}"]`);
-      if (!article) continue;
-      const complete = state.answers[q.id] === 'complete';
-      const answer = article.querySelector('[data-action="answer"]');
-      answer.value = state.answers[q.id] || '';
-      answer.disabled = busy;
-      const badge = article.querySelector('[data-field="badge"]');
-      badge.textContent = complete ? '답변 확인' : '미해결';
-      badge.classList.toggle('is-resolved', complete);
-      const feedback = article.querySelector('[data-field="feedback"]');
-      feedback.textContent = complete ? '답변이 준비되었습니다. 연결된 가상 근거를 확인해 주세요.' : state.answers[q.id] === 'partial' ? q.why : '답변이 없으므로 질문을 미해결 상태로 유지합니다.';
-      feedback.classList.toggle('is-pending', state.answers[q.id] === 'partial');
-      const toggle = article.querySelector('[data-action="toggle-evidence"]');
-      toggle.disabled = !complete || busy;
-      const open = complete && !!state.opened[q.id];
-      toggle.setAttribute('aria-expanded', String(open));
-      toggle.textContent = open ? '가상 근거 접기' : '가상 근거 보기';
-      toggle.setAttribute('aria-label', `${article.querySelector('h4').textContent.split('.')[0]} 가상 근거 ${open ? '접기' : '보기'}`);
-      const evidence = article.querySelector('.demo-evidence');
-      evidence.hidden = !open;
-      const checkbox = article.querySelector('[data-action="check-evidence"]');
-      checkbox.checked = !!state.evidence[q.id];
-      checkbox.disabled = !complete || busy;
-    }
-    elements.acknowledge.disabled = !ready || busy;
-    elements.acknowledge.checked = state.acknowledged;
-    elements.approve.disabled = !ready || !state.acknowledged || state.approved || busy;
-    elements.approve.textContent = state.approved ? '검수 승인 시뮬레이션 완료' : '검수 승인 시뮬레이션';
-    elements['approval-hint'].textContent = state.approved ? '이 페이지의 로컬 검수 상태만 바뀌었습니다. 실제 변경이나 외부 전송은 없습니다.' : ready ? '명시적 확인 후 승인할 수 있습니다. 승인은 DB 실행을 의미하지 않습니다.' : `미해결 질문 ${counts.total - counts.answered}개, 근거 미확인 ${counts.total - counts.evidence}개가 남아 있습니다.`;
-    const stage = !state.runs || busy ? 'analysis' : !answered ? 'answers' : counts.evidence < counts.total ? 'evidence' : 'approval';
-    const order = ['analysis', 'answers', 'evidence', 'approval'];
-    root.querySelectorAll('[data-demo-step]').forEach(step => {
-      const key = step.dataset.demoStep;
-      if (key === stage && !state.approved) step.setAttribute('aria-current', 'step');
-      else step.removeAttribute('aria-current');
-      step.classList.toggle('is-complete', state.approved || order.indexOf(key) < order.indexOf(stage));
+  function releaseCheck(request) {
+    const checks=[
+      {ok:!!request.note.trim()&&!!request.date,label:'필수값',detail:'변경 내용과 배포 예정일을 입력하세요.'},
+      {ok:request.linked==='ready',label:'작업 티켓',detail:request.linked==='missing'?'작업 티켓 연결이 필요합니다.':'연결된 티켓이 배포 준비 상태여야 합니다.'},
+      {ok:!(request.repo==='checkout-api'&&request.date==='2026-11-03'),label:'중복 요청',detail:'같은 저장소·날짜의 가상 요청 REL-DEMO-01이 있습니다. 일정을 조율하세요.'}
+    ];
+    return {checks,ready:checks.every(c=>c.ok)};
+  }
+  function qaGate(state) { return state.generated&&state.reviewed&&(!state.requirement||state.fixed); }
+  if(typeof module!=='undefined'&&module.exports) module.exports={blank,dbResult,releaseCheck,qaGate};
+  if(typeof document==='undefined') return;
+  const root=document.getElementById('demo');
+  if(!root||root.dataset.initialized==='true') return;
+  root.dataset.initialized='true';
+  const el=id=>root.querySelector('#'+id);
+  const put=(id,text)=>{el(id).textContent=text;};
+  const node=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;return n;};
+  const list=(id,items)=>el(id).replaceChildren(...items.map(s=>node('li',s)));
+  const tabs=[...root.querySelectorAll('[data-tab]')];
+  const activate=tab=>{tabs.forEach(t=>{const yes=t===tab;t.setAttribute('aria-selected',String(yes));t.tabIndex=yes?0:-1;el('panel-'+t.dataset.tab).hidden=!yes;});};
+  tabs.forEach((tab,index)=>{
+    tab.addEventListener('click',()=>activate(tab));
+    tab.addEventListener('keydown',event=>{
+      let target;
+      if(event.key==='ArrowRight') target=tabs[(index+1)%tabs.length];
+      if(event.key==='ArrowLeft') target=tabs[(index+tabs.length-1)%tabs.length];
+      if(event.key==='Home') target=tabs[0];
+      if(event.key==='End') target=tabs.at(-1);
+      if(target){event.preventDefault();activate(target);target.focus();}
     });
-    elements['history-list'].replaceChildren(...(state.history.length ? state.history : ['선택한 시나리오의 활동이 여기에 표시됩니다.']).map(text => textNode('li', '', text)));
-  }
-
-  function loadScenario() {
-    elements.ddl.textContent = scenarios[active].ddl;
-    elements.context.textContent = scenarios[active].context;
-    buildQuestions();
-    render();
-  }
-
-  elements.scenario.addEventListener('change', () => {
-    cancelAnalysis();
-    active = elements.scenario.value;
-    loadScenario();
-    const counts = count();
-    announce(current().runs ? `시나리오를 전환했습니다. 저장된 미해결 질문 ${counts.total - counts.answered}개와 검수 상태를 복원했습니다.` : '시나리오를 전환했습니다. 변경 분석을 시작해 주세요.');
   });
-  elements.reset.addEventListener('click', () => {
-    cancelAnalysis();
-    states[active] = blank();
-    loadScenario();
-    announce('이 시나리오의 질문·답변·근거 확인·승인 상태를 초기화했습니다. 다른 시나리오의 상태는 유지됩니다.');
-  });
-  elements.analyze.addEventListener('click', () => {
-    if (busy) return;
-    busy = true;
-    const version = ++generation;
-    const scenario = active;
-    invalidateApproval();
-    render();
-    announce(current().runs ? '재분석 중입니다. 기존 질문과 답변·근거 확인을 유지합니다.' : '가상 DDL의 확인 질문을 구성하고 있습니다. 실제 분석 서버나 DB에 연결하지 않습니다.');
-    timer = setTimeout(() => {
-      if (version !== generation || scenario !== active) return;
-      timer = null;
-      busy = false;
-      current().runs += 1;
-      const counts = count();
-      const remaining = counts.total - counts.answered;
-      record(current().runs === 1 ? `분석 1회: 가상 검수 질문 ${counts.total}개 생성. 승인은 대기.` : `분석 ${current().runs}회: 미해결 질문 ${remaining}개와 답변·근거 상태 유지. 명시적 승인은 다시 필요.`);
-      if (current().runs === 1) buildQuestions();
-      render();
-      announce(current().runs === 1 ? `분석 완료. 미해결 질문 ${remaining}개가 있습니다. 분석만으로 승인되지 않습니다.` : `재분석 완료. 미해결 질문 ${remaining}개가 그대로 유지되었습니다. 기존 답변과 근거 확인을 보존했으며, 검수 승인은 다시 필요합니다.`);
-    }, 360);
-  });
-  elements.questions.addEventListener('change', event => {
-    if (busy) return;
-    const control = event.target;
-    const article = control.closest('[data-question]');
-    if (!article) return;
-    const id = article.dataset.question;
-    if (control.dataset.action === 'answer') {
-      current().answers[id] = control.value;
-      current().evidence[id] = false;
-      current().opened[id] = false;
-      invalidateApproval();
-      const counts = count();
-      record(`샘플 답변 변경: 미해결 질문 ${counts.total - counts.answered}개. 해당 근거와 승인은 다시 확인.`);
-      render();
-      announce(control.value === 'complete' ? '샘플 답변이 준비되었습니다. 가상 근거를 열어 확인해 주세요.' : control.value === 'partial' ? `질문을 미해결 상태로 유지합니다. ${scenarios[active].questions.find(q => q.id === id).why}` : '답변이 선택되지 않아 질문을 미해결 상태로 유지합니다.');
-    } else if (control.dataset.action === 'check-evidence' && current().answers[id] === 'complete') {
-      current().evidence[id] = control.checked;
-      invalidateApproval();
-      record(control.checked ? '가상 근거 확인을 기록했습니다.' : '가상 근거 확인을 해제했습니다. 승인은 다시 필요합니다.');
-      render();
-      announce(control.checked ? '가상 근거 확인을 기록했습니다. 모든 질문과 근거를 확인해도 승인은 별도로 필요합니다.' : '근거 확인을 해제했습니다. 검수 승인 상태를 대기로 변경했습니다.');
+  document.querySelectorAll('[data-open-demo]').forEach(link=>link.addEventListener('click',()=>{const tab=tabs.find(t=>t.dataset.tab===link.dataset.openDemo);if(tab)activate(tab);}));
+  const states={};
+  const kind=()=>el('dbq-scenario').value;
+  const mode=()=>el('dbq-mode').value;
+  const key=()=>mode()+':'+kind();
+  const current=()=>states[key()]??(states[key()]=blank());
+  function renderDB() {
+    const state=current(), f=fixtures[kind()], r=dbResult(kind(),state);
+    const isPR=mode()==='pr', isDML=kind()==='dml'||kind()==='unknown';
+    put('dbq-file',f.file);put('dbq-input',state.sourceFixed?f.sql+'\n-- 가상 소스 보완: 대상·조건·설정 명시':f.input);
+    put('dbq-path-note',isPR?'PR: 변경 스냅샷 고정 → DB 변경 선체크 → SQL 도출 → Remote MCP 판정. 개발자 보고서와 DBA 보고서를 구분합니다.':'로컬: 사용자가 검수를 명시적으로 요청 → 변경 코드·SQL 확인 → Remote MCP 검수 → 필요한 업무 질문.');
+    put('dbq-badge',r.type==='idle'?'검수 전':r.type==='unknown'?'소스 보완 필요':r.type==='none'?'DB 변경 없음':r.ready?'개발자 보완 완료':'업무 확인 필요');
+    put('dbq-verdict',r.verdict);put('dbq-pending',r.pending===null?'—':r.pending+'건');put('dbq-dba',r.type==='review'?'1건 · 별도':'—');
+    el('dbq-answer-panel').hidden=r.type!=='review';el('dbq-source-panel').hidden=r.type!=='unknown';el('dbq-next-panel').hidden=!r.ready;
+    el('dbq-answer').value=state.answer;
+    put('dbq-answer-help',f.fact+(isPR?'\n실제 PR에서는 /dbq-answer 댓글과 /dbq-recheck로 보완합니다.':'\n실제 로컬 검수에서는 같은 대화에서 업무 의미를 답합니다.'));
+    if(r.type==='idle'){put('dbq-summary','입력과 경로를 선택한 뒤 검수를 시작하세요.');put('dbq-result','아직 도출한 SQL과 검수 결과가 없습니다.');}
+    else if(r.type==='unknown'){put('dbq-summary','동적 SQL의 대상과 조건을 확정할 수 없습니다. DB 변경 없음이나 PASS로 바꾸지 않고 소스 보완을 요청합니다.');put('dbq-result','classification: unknown\n누락: tableName, filter, DB 설정\nSQL 생성·SSOT 판정 미실행');}
+    else if(r.type==='none'){put('dbq-summary',isPR?'선체크에서 DB 변경이 없음을 확인했습니다. SQL 도출·SSOT 검수·후속 보고서 Job을 생략합니다.':'확인한 범위에 DB 변경이 없습니다. 원격 SQL 검수를 호출하지 않습니다.');put('dbq-result','classification: not_db\nscope: docs/README.md\nSQL·검수 ID 없음');}
+    else {
+      put('dbq-summary',r.ready?'재검수 예시에서 개발자 확인 사항이 해소되었습니다. DBA의 실행 전 확인은 별도로 남습니다.':f.question+'\nPASS여도 이 질문이 남아 있으므로 완료가 아닙니다.');
+      put('dbq-result',f.sql+'\n\n[가상 코어 결과]\nverdict: PASS\nrequester: '+r.pending+'건\ndba_before_apply: 백업·복구·작업 영향 확인');
     }
+    put('dbq-binding',r.type==='review'?`가상 검수 ID DEMO-${mode().toUpperCase()}-${kind()}-${state.runs} · SSOT demo-v1 · 재검수는 새 ID로 직전 결과를 연결합니다.`:'실제 검수 ID·서버 호출은 생성하지 않습니다.');
+    put('dbq-run',state.runs?'같은 입력 다시 검수':'변경 검수 체험');
+    put('dbq-next',isPR?(state.next?'PR 2차 결과 확인됨':'PR 2차 보고서 체험'):isDML?(state.next===0?'가상 티켓 미리보기':state.next===1?'이 가상 검수로 티켓 생성 동의':'가상 요청 생성됨'):'DDL 코딩 가이드 보기');
+    el('dbq-next').disabled=state.next>=2||(!isDML&&state.next>0)||isPR&&state.next>0;
+    put('dbq-next-result',state.next===0?'':isPR?'현재 입력을 2차 검수한 DBA용 보고서 예시입니다. DBA의 승인 전·실행 전 확인은 남아 있으며 SQL 실행이나 Jira 제출은 하지 않았습니다.':isDML?(state.next===1?'미리보기: 가상 DB demo_shop / 위 SQL / 현재 DEMO 검수 ID. 아래 버튼으로 이 검수의 생성에 동의할 수 있습니다.':'가상 티켓 DEMO-001 생성 상태입니다. 실제 Jira 요청·DBA 승인·SQL 실행은 없습니다.'):'코딩 가이드: 검수된 컬럼명·타입·nullable·기본값을 ORM과 마이그레이션에 일치시킵니다. 실제 구현 뒤 전체 SQL을 다시 추출해 새 검수를 요청합니다.');
+  }
+  ['dbq-mode','dbq-scenario'].forEach(id=>el(id).addEventListener('change',()=>{renderDB();put('dbq-status','예시를 전환했습니다. 각 경로·예시의 상태는 이 페이지 안에서 보존됩니다.');}));
+  function runDB(){const s=current();s.runs++;s.applied=s.answer==='fact';s.next=0;renderDB();put('dbq-status',dbResult(kind(),s).ready?'재검수 결과: PASS · 개발자 확인 0건. DBA 승인·실행은 별도입니다.':s.answer==='vague'?'승인한다는 말은 업무 근거가 아닙니다. 필요한 업무 질문을 유지합니다.':'입력에 따른 가상 결과입니다. 미해결 항목과 다음 행동을 확인하세요.');}
+  el('dbq-run').addEventListener('click',runDB);el('dbq-rerun').addEventListener('click',runDB);
+  el('dbq-answer').addEventListener('change',()=>{const s=current();s.answer=el('dbq-answer').value;s.applied=false;s.next=0;renderDB();put('dbq-status','답변이 바뀌었습니다. 이전 완료 상태를 사용하지 않으며 재검수가 필요합니다.');});
+  el('dbq-source').addEventListener('click',()=>{const s=current();s.sourceFixed=true;s.runs=0;s.applied=false;s.next=0;renderDB();put('dbq-status','가상 소스·DB 설정을 보완했습니다. 변경된 입력으로 검수를 다시 시작하세요.');});
+  el('dbq-next').addEventListener('click',()=>{if(!dbResult(kind(),current()).ready)return;current().next++;renderDB();put('dbq-status',el('dbq-next-result').textContent);});
+  el('dbq-reset').addEventListener('click',()=>{states[key()]=blank();renderDB();put('dbq-status','현재 경로·예시만 초기화했습니다.');});
+  renderDB();
+  let qa={generated:false,reviewed:false,fixed:false,requirement:false,ran:false,retried:false};
+  function renderQA(){
+    el('qa-review').disabled=!qa.generated;el('qa-fix').disabled=!qa.reviewed||!qa.requirement||qa.fixed;
+    el('qa-run').disabled=!qaGate(qa);el('qa-retry').disabled=!qa.ran||qa.retried;
+    list('qa-cases',!qa.generated?['아직 생성된 TC가 없습니다.']:['TC-01 · 결제 성공 → 주문 완료','TC-02 · 결제 거절 → 오류 표시',...(qa.fixed?['TC-03 · 취소 → 재시도 → 중복 주문 없음']:[])]);
+    put('qa-review-result',!qa.reviewed?'교차 검토 대기':qa.requirement&&!qa.fixed?'검토 결과: 취소·재시도 TC 누락. 보완 전 실행을 보류합니다.':'요구사항과 TC 대응 확인 완료 · 가상 결과');
+    const runner=el('qa-target').value==='web'?'Playwright':'Appium';
+    put('qa-output',!qa.ran?'실행 대기':`${runner} / 가상 실행\nTC-01 PASS\nTC-02 ${qa.retried?'PASS · 상태 대기 조건 보완':'FAIL · 오류 메시지 표시 전에 검사'}${qa.fixed?'\nTC-03 PASS':''}\n${qa.retried?'이번 예시 전체 통과\n이전 실행: TC-02 FAIL · 응답 대기 조건 누락':'실패 원인: 응답 대기 조건 누락'}`);
+  }
+  const invalidateQA=()=>{qa={generated:false,reviewed:false,fixed:false,requirement:el('qa-requirement').checked,ran:false,retried:false};renderQA();};
+  el('qa-requirement').addEventListener('change',()=>{invalidateQA();put('qa-status','요구사항 변경: 이전 TC와 결과를 초기화했습니다.');});
+  el('qa-generate').addEventListener('click',()=>{invalidateQA();qa.generated=true;renderQA();put('qa-status','2개 TC 초안을 만들었습니다. 요구사항 누락 여부를 교차 검토하세요.');});
+  el('qa-review').addEventListener('click',()=>{qa.reviewed=true;renderQA();put('qa-status',el('qa-review-result').textContent);});
+  el('qa-fix').addEventListener('click',()=>{qa.fixed=true;qa.ran=false;qa.retried=false;renderQA();put('qa-status','취소·재시도 TC를 추가하고 요구사항 대응을 재확인했습니다.');});
+  el('qa-run').addEventListener('click',()=>{if(!qaGate(qa))return;qa.ran=true;qa.retried=false;renderQA();put('qa-status','가상 실행 실패 1건. 실패와 성공을 구분해 기록했습니다.');});
+  el('qa-retry').addEventListener('click',()=>{if(!qa.ran)return;qa.retried=true;renderQA();put('qa-status','대기 조건을 보완한 재실행 예시가 통과했습니다. 최초 실패 기록은 실행 설명에 남깁니다.');});
+  el('qa-target').addEventListener('change',()=>{qa.ran=false;qa.retried=false;renderQA();put('qa-status','실행 대상을 바꿨습니다. 기존 대상의 성공을 새 대상에 재사용하지 않습니다.');});
+  el('qa-reset').addEventListener('click',()=>{el('qa-requirement').checked=false;el('qa-target').value='web';invalidateQA();put('qa-status','QA 예시를 초기화했습니다.');});renderQA();
+  el('release-form').addEventListener('submit',event=>{
+    event.preventDefault();const request={repo:el('release-repo').value,date:el('release-date').value,note:el('release-note').value,linked:el('release-linked').value};const result=releaseCheck(request);
+    list('release-results',result.checks.map(c=>`${c.ok?'통과':'보완'} · ${c.label}: ${c.ok?'예시 기준 충족':c.detail}`));
+    put('release-notice',`[가상 알림 미리보기]\n${request.repo} / ${request.date||'날짜 미입력'}\n${result.ready?'요청 검증 통과 · 승인 절차 대기':'배포 요청 보완 필요'}\n${request.note||'변경 내용 미입력'}`);
+    put('release-status',result.ready?'필수값·티켓·중복 검사를 통과했습니다. 실제 승인·배포는 진행하지 않았습니다.':`보완할 항목 ${result.checks.filter(c=>!c.ok).length}건. 내용을 바꾼 뒤 다시 검증하세요.`);
   });
-  elements.questions.addEventListener('click', event => {
-    const button = event.target.closest('[data-action="toggle-evidence"]');
-    if (!button || button.disabled || busy) return;
-    const id = button.closest('[data-question]').dataset.question;
-    current().opened[id] = !current().opened[id];
-    render();
-  });
-  elements.acknowledge.addEventListener('change', () => {
-    if (busy || elements.acknowledge.disabled) return;
-    current().acknowledged = elements.acknowledge.checked;
-    current().approved = false;
-    render();
-    announce(current().acknowledged ? '승인 의사를 확인했습니다. 검수 승인 시뮬레이션 버튼을 눌러 마무리하세요.' : '승인 의사 확인을 해제했습니다. 검수 승인 상태는 대기입니다.');
-  });
-  elements.approve.addEventListener('click', () => {
-    const counts = count();
-    if (busy || !current().runs || !current().acknowledged || counts.answered !== counts.total || counts.evidence !== counts.total || current().approved) return;
-    current().approved = true;
-    record('사용자가 검수 승인 시뮬레이션을 완료했습니다. 로컬 상태만 변경.');
-    render();
-    announce('검수 승인 시뮬레이션 완료. 질문 답변·근거 확인·명시적 승인을 거쳤습니다. 실제 DB 변경이나 네트워크 요청은 발생하지 않았습니다.');
-  });
-
-  root.querySelector('[data-demo-app]').hidden = false;
-  loadScenario();
+  function clearRelease(){list('release-results',['입력 변경 · 다시 검증이 필요합니다.']);put('release-notice','현재 입력에 대한 검증·알림 미리보기 없음');put('release-status','입력이 변경되어 이전 검증 결과를 폐기했습니다.');}
+  el('release-form').addEventListener('input',clearRelease);el('release-form').addEventListener('change',clearRelease);
+  el('release-reset').addEventListener('click',()=>{el('release-form').reset();clearRelease();});
+  const events=[{service:'checkout-api',trace:'trace-order',span:'span-01',message:'결제 요청',level:'info'},{service:'search-api',trace:'trace-search',span:'span-02',message:'상품 검색 완료',level:'info'},{service:'payment-api',trace:'trace-order',span:'span-03',message:'결제 제공자 응답 시간 초과',level:'error'}];
+  function renderLogs(){const trace=el('logs-trace').value;const selected=events.filter(e=>trace==='all'||e.trace===trace);put('logs-count',`이벤트 ${selected.length}건`);put('logs-output',selected.map(e=>el('logs-format').value==='ecs'?JSON.stringify({'service.name':e.service,'trace.id':e.trace,'span.id':e.span,'log.level':e.level,message:e.message},null,2):`[${e.service}] ${e.level.toUpperCase()} ${e.message}\ntrace=${e.trace} span=${e.span}`).join('\n\n'));put('logs-error',el('logs-protocol').value==='rest'?'HTTP 504\n{"error":{"code":504,"status":"DEADLINE_EXCEEDED",\n "message":"결제 제공자 응답 시간 초과"}}':'gRPC status: DEADLINE_EXCEEDED (4)\nmessage: 결제 제공자 응답 시간 초과');put('logs-status',`${trace==='all'?'전체 요청':trace} · 이벤트 ${selected.length}건. 로그 형식과 클라이언트 응답은 같은 오류의 서로 다른 표현입니다.`);}
+  ['logs-trace','logs-format','logs-protocol'].forEach(id=>el(id).addEventListener('change',renderLogs));el('logs-reset').addEventListener('click',()=>{el('logs-trace').value='all';el('logs-format').value='raw';el('logs-protocol').value='rest';renderLogs();});renderLogs();
+  root.querySelector('[data-demo-app]').hidden=false;
 })();

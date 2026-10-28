@@ -1,57 +1,47 @@
 <section class="section review-demo" id="demo" aria-labelledby="demo-title">
-  <div class="section-title">
-    <div><p class="eyebrow">INTERACTIVE CASE / DB CHANGE REVIEW</p><h2 id="demo-title">분석이 끝나도, 검수는 남아 있습니다</h2></div>
-    <span class="pill">직접 체험하는 설계 원칙</span>
-  </div>
-  <p class="demo-intro">DDL 변경을 고르고, 질문에 답하고, 근거를 확인해 보세요. 재분석해도 미해결 질문은 유지됩니다. 마지막 검수 승인은 사람이 명시적으로 결정합니다.</p>
-  <p class="demo-disclaimer"><strong>일반화된 포트폴리오 데모</strong> · 실제 회사 시스템의 복제가 아닙니다. 모든 DDL·질문·근거는 가상 데이터이며, 네트워크 요청·실제 DB 실행·실운영 성과가 없습니다. 브라우저 메모리에서만 동작하며 새로고침하면 초기화됩니다.</p>
-  <noscript><p class="demo-noscript">이 데모는 JavaScript가 필요합니다. 설계 원칙: 재분석은 미해결 질문을 보존하며, 분석 완료와 사용자 검수 승인을 분리합니다.</p></noscript>
-  <div class="demo-app" data-demo-app hidden>
-    <ol class="demo-steps" aria-label="검수 단계">
-      <li data-demo-step="analysis"><span>01</span> 변경 분석</li>
-      <li data-demo-step="answers"><span>02</span> 질문 답변</li>
-      <li data-demo-step="evidence"><span>03</span> 근거 확인</li>
-      <li data-demo-step="approval"><span>04</span> 사용자 승인</li>
-    </ol>
-    <div class="demo-layout">
-      <div class="demo-source card">
-        <p class="demo-kicker">01 / 변경 요청</p>
-        <label for="demo-scenario">가상 DDL 시나리오</label>
-        <select id="demo-scenario" aria-describedby="demo-scenario-help">
-          <option value="index">인덱스 추가 · 조회 성능</option>
-          <option value="not-null">NOT NULL 변경 · 데이터 정합성</option>
-          <option value="drop-column">컬럼 삭제 · 사용처 확인</option>
-        </select>
-        <p id="demo-scenario-help" class="demo-small">다른 시나리오로 이동해도 각각의 검수 상태는 이 페이지 안에서 유지됩니다.</p>
-        <div class="demo-code-header"><span>change.sql</span><span>가상 PostgreSQL DDL</span></div>
-        <pre class="demo-code"><code id="demo-ddl"></code></pre>
-        <p id="demo-context" class="demo-context"></p>
-        <div class="demo-actions">
-          <button class="button primary" id="demo-analyze" type="button">변경 분석하기</button>
-          <button class="button" id="demo-reset" type="button">이 시나리오 초기화</button>
-        </div>
-        <div class="demo-principle">
-          <strong>분석 완료 ≠ 검수 승인</strong>
-          <p>분석은 질문을 정리합니다. 답변·근거·명시적 승인이 모여야 검수를 마칠 수 있습니다.</p>
-        </div>
-      </div>
-      <div class="demo-review card" aria-labelledby="demo-review-title">
-        <div class="demo-review-head"><div><p class="demo-kicker">02–04 / 검수 기록</p><h3 id="demo-review-title">확인해야 할 질문</h3></div><span id="demo-analysis-badge" class="demo-badge">분석 전</span></div>
-        <div class="demo-metrics" aria-label="검수 진행 상황">
-          <div><span>미해결 질문</span><strong id="demo-unresolved">—</strong></div>
-          <div><span>근거 확인</span><strong id="demo-evidence-count">0 / 0</strong></div>
-          <div><span>검수 승인</span><strong id="demo-approval-state">대기</strong></div>
-        </div>
-        <p id="demo-empty" class="demo-empty">왼쪽의 ‘변경 분석하기’를 누르면 이 변경에 필요한 질문이 생성됩니다.</p>
-        <div id="demo-questions"></div>
-        <div id="demo-approval-panel" class="demo-approval-panel" hidden>
-          <label class="demo-check"><input id="demo-acknowledge" type="checkbox" disabled><span>모든 가상 답변과 근거를 확인했고, 이 검수를 승인하겠습니다</span></label>
-          <button id="demo-approve" class="button primary" type="button" disabled>검수 승인 시뮬레이션</button>
-          <p id="demo-approval-hint" class="demo-small">질문 답변과 근거 확인을 먼저 완료해 주세요.</p>
-        </div>
-      </div>
+  <div class="section-title"><div><p class="eyebrow">02 / INTERACTIVE WORKBENCH</p><h2 id="demo-title">설계가 동작이 되는 과정</h2></div><span class="pill">4가지 업무 체험</span></div>
+  <p class="demo-intro">변경을 검수하고, 테스트를 보완하고, 배포 누락을 찾고, 로그를 연결합니다. 입력을 바꾸며 제가 만든 시스템의 판단 기준을 살펴보세요.</p>
+  <p class="demo-disclaimer"><strong>가상 데이터로 만든 설명용 데모</strong> · 실제 회사 시스템의 복제가 아닙니다. 실제 AI·MCP·DB·Jira에 연결하지 않습니다. 결과는 미리 정한 예시이며, 상태는 이 페이지 안에서만 유지됩니다.</p>
+  <noscript><p>JavaScript를 켜면 4가지 업무 흐름을 체험할 수 있습니다. DBQ의 실제 구조는 위 업무 사례와 이력서에도 설명되어 있습니다.</p></noscript>
+  <div data-demo-app hidden>
+    <div class="workbench-tabs" role="tablist" aria-label="업무 데모 선택">
+      <button id="tab-dbq" role="tab" aria-controls="panel-dbq" aria-selected="true" tabindex="0" data-tab="dbq">01 <strong>DBQ 검수</strong><span>코드에서 검수 결과까지</span></button>
+      <button id="tab-qa" role="tab" aria-controls="panel-qa" aria-selected="false" tabindex="-1" data-tab="qa">02 <strong>QA 파이프라인</strong><span>문서에서 테스트까지</span></button>
+      <button id="tab-release" role="tab" aria-controls="panel-release" aria-selected="false" tabindex="-1" data-tab="release">03 <strong>배포 요청 검증</strong><span>누락과 중복 찾기</span></button>
+      <button id="tab-logs" role="tab" aria-controls="panel-logs" aria-selected="false" tabindex="-1" data-tab="logs">04 <strong>로그 추적</strong><span>서비스 간 흐름 연결</span></button>
     </div>
-    <p id="demo-feedback" class="demo-feedback status" role="status" aria-live="polite" aria-atomic="true">시나리오를 선택하고 변경 분석을 시작해 보세요.</p>
-    <div class="demo-history"><h3>이번 페이지의 검수 이력</h3><ol id="demo-history-list"><li>선택한 시나리오의 활동이 여기에 표시됩니다.</li></ol></div>
+    <section id="panel-dbq" role="tabpanel" aria-labelledby="tab-dbq" tabindex="0">
+      <header class="workbench-header"><div><h3>DBQ · 코드 해석과 판정의 책임을 나누다</h3><p>AI가 SQL·업무 맥락을 정리하고, 원격 결정적 코어가 게시 SSOT로 판정합니다. 답변은 최신 재검수에서 해소 여부를 확인합니다.</p></div><a href="#db-review" class="text-link">업무 배경 ↑</a></header>
+      <ol class="flow-strip" aria-label="DBQ 전체 흐름"><li>명시적 로컬 검수</li><li>개발자 보완·재검수</li><li>PR 1차·2차 검수</li><li>요청 제출·DBA 검토</li></ol>
+      <div class="demo-layout">
+        <div class="demo-source"><label for="dbq-mode">검수 경로</label><select id="dbq-mode"><option value="local">로컬 · Claude Code / Codex에서 요청</option><option value="pr">PR · 고정된 변경 스냅샷 분석</option></select>
+          <label for="dbq-scenario">변경 예시</label><select id="dbq-scenario"><option value="schema">ORM 컬럼 추가 · 업무 의미 확인</option><option value="dml">데이터 수정 · 기대값 확인</option><option value="unknown">동적 SQL · 도출 근거 부족</option><option value="none">문서 수정 · DB 변경 없음</option></select>
+          <div class="demo-code-header"><span id="dbq-file"></span><span>가상 변경</span></div><pre class="demo-code"><code id="dbq-input"></code></pre>
+          <p class="demo-small" id="dbq-path-note"></p><div class="demo-actions"><button type="button" class="primary" id="dbq-run">변경 검수 체험</button><button type="button" id="dbq-reset">현재 예시 초기화</button></div>
+          <div id="dbq-answer-panel" hidden><label for="dbq-answer">개발자 업무 답변</label><select id="dbq-answer"><option value="">아직 확인하지 못했습니다</option><option value="vague">문제없습니다. 승인합니다.</option><option value="fact">준비된 가상 업무 근거로 답변</option></select><p class="demo-small" id="dbq-answer-help"></p><button id="dbq-rerun" type="button">답변 반영 후 재검수</button></div>
+          <div id="dbq-source-panel" hidden><p class="demo-small">동적 조건의 실제 분기와 대상 DB를 확인해야 SQL을 확정할 수 있습니다.</p><button id="dbq-source" type="button">가상 소스·설정 보완하기</button></div>
+        </div>
+        <div class="demo-review"><div class="demo-review-head"><h4>검수 결과와 다음 행동</h4><span class="demo-badge" id="dbq-badge">검수 전</span></div><div class="demo-metrics"><div><span>엔진 판정</span><strong id="dbq-verdict">—</strong></div><div><span>개발자 확인</span><strong id="dbq-pending">—</strong></div><div><span>DBA 확인</span><strong id="dbq-dba">별도</strong></div></div>
+          <p id="dbq-summary">왼쪽의 변경 예시를 골라 검수를 시작하세요.</p><pre class="demo-code" id="dbq-result"></pre><p id="dbq-binding" class="demo-small"></p><div class="demo-principle"><strong>코어 PASS + 개발자 확인 0건</strong><p>로컬 검수 완료 기준입니다. PR 자동 검수·DBA 승인·운영 DB 실행을 대신하지 않습니다.</p></div>
+          <div id="dbq-next-panel" hidden><button id="dbq-next" type="button"></button><p id="dbq-next-result" class="demo-small"></p></div>
+        </div>
+      </div><p class="demo-feedback" id="dbq-status" role="status" aria-live="polite" aria-atomic="true">검수할 입력과 경로를 선택해 주세요.</p>
+      <details class="architecture"><summary>실제 구조에서 데모가 보여주는 범위</summary><ul><li>로컬은 사용자가 명시적으로 요청합니다. 코드를 편집하거나 커밋했다는 이유만으로 검수를 시작하지 않습니다.</li><li>AI의 SQL 도출 결과와 Remote MCP 코어 판정은 다릅니다. 불확실한 SQL은 소스 보완이 필요합니다.</li><li>개발자 질문과 DBA의 승인 전·실행 전 확인을 구분합니다. ‘승인합니다’라는 말로 업무 근거를 대신하지 않습니다.</li><li>DDL은 코딩 가이드, DML은 최신 검수의 티켓 미리보기와 생성 동의로 이어집니다. PR 검수는 별도 실행이며 이전 로컬 PASS를 복사하지 않습니다.</li></ul></details>
+    </section>
+    <section id="panel-qa" role="tabpanel" aria-labelledby="tab-qa" tabindex="0" hidden>
+      <header class="workbench-header"><div><h3>QA · 생성된 테스트도 검토가 필요하다</h3><p>요구사항 수집 → TC 초안 → 교차 검토 → 웹·모바일 실행. 빠진 시나리오와 실행 실패를 직접 보완하세요.</p></div><a class="text-link" href="#qa-platform">업무 배경 ↑</a></header>
+      <div class="demo-layout"><div class="demo-source"><label class="demo-check"><input id="qa-requirement" type="checkbox"><span>요구사항에 ‘취소 후 재시도’ 흐름 포함</span></label><pre class="demo-code">가상 PRD: 주문 결제
+· 결제 성공 시 주문 완료
+· 결제 거절 시 오류 안내
+· [선택] 취소 후 다시 결제 가능</pre><p class="demo-small">요구사항을 바꾸면 기존 TC·검토·실행 결과를 초기화합니다.</p><div class="demo-actions"><button id="qa-generate" class="primary" type="button">TC 초안 생성</button><button id="qa-review" type="button" disabled>교차 검토</button><button id="qa-fix" type="button" disabled>빠진 TC 보완</button></div><label for="qa-target">실행 대상</label><select id="qa-target"><option value="web">웹 · Playwright</option><option value="mobile">모바일 · Appium</option></select><div class="demo-actions"><button id="qa-run" type="button" disabled>테스트 실행</button><button id="qa-retry" type="button" disabled>실패 원인 보완 후 재실행</button><button id="qa-reset" type="button">초기화</button></div></div><div class="demo-review"><h4>TC와 실행 기록</h4><ul id="qa-cases"><li>아직 생성된 TC가 없습니다.</li></ul><p id="qa-review-result" class="demo-small">교차 검토 대기</p><pre id="qa-output" class="demo-code">실행 대기</pre><p class="demo-small">초안의 누락과 네트워크 대기 실패를 미리 정한 가상 결과로 재현합니다. 실제 LLM·브라우저·기기 테스트를 실행하지 않습니다.</p></div></div><p id="qa-status" class="demo-feedback" role="status" aria-live="polite" aria-atomic="true">요구사항을 고르고 TC를 생성하세요.</p>
+    </section>
+    <section id="panel-release" role="tabpanel" aria-labelledby="tab-release" tabindex="0" hidden>
+      <header class="workbench-header"><div><h3>배포 요청 · 필수값과 연결 관계를 함께 확인하다</h3><p>필드를 채웠더라도 연결 티켓의 상태나 같은 날의 중복 배포가 남을 수 있습니다.</p></div><a class="text-link" href="#release-validation">업무 배경 ↑</a></header>
+      <div class="demo-layout"><form class="demo-source" id="release-form"><label for="release-repo">가상 저장소</label><select id="release-repo"><option value="checkout-api">checkout-api</option><option value="catalog-api">catalog-api</option></select><label for="release-date">배포 예정일</label><input id="release-date" type="date" value="2026-11-03"><label for="release-note">변경 내용</label><input id="release-note" type="text" maxlength="160" placeholder="예: 결제 오류 메시지 개선"><label for="release-linked">연결된 작업 티켓</label><select id="release-linked"><option value="missing">연결 없음</option><option value="open">연결됨 · 진행 중</option><option value="ready">연결됨 · 배포 준비 완료</option></select><p class="demo-small">중복 예시: checkout-api에 2026-11-03 배포 요청 1건이 이미 있습니다. 다른 저장소나 날짜로 바꿔 비교해 보세요.</p><div class="demo-actions"><button class="primary" type="submit">요청 검증</button><button id="release-reset" type="button">초기화</button></div></form><div class="demo-review"><h4>입력·연결·중복 검증</h4><ul id="release-results"><li>아직 검증하지 않았습니다.</li></ul><pre id="release-notice" class="demo-code">가상 Jira·Slack 알림 미리보기</pre><p class="demo-small">예시 정책입니다. 검증 통과는 배포 승인이나 실제 배포가 아닙니다. 댓글·알림을 외부로 보내지 않습니다.</p></div></div><p id="release-status" class="demo-feedback" role="status" aria-live="polite" aria-atomic="true">요청을 채워 검증해 보세요.</p>
+    </section>
+    <section id="panel-logs" role="tabpanel" aria-labelledby="tab-logs" tabindex="0" hidden>
+      <header class="workbench-header"><div><h3>로그 · 다른 서비스의 오류를 하나의 흐름으로</h3><p>공통 로그 형식과 trace/span 식별자가 있으면 관련 이벤트를 연결할 수 있습니다.</p></div><a class="text-link" href="#logging-standards">업무 배경 ↑</a></header>
+      <div class="demo-layout"><div class="demo-source"><label for="logs-trace">추적할 가상 요청</label><select id="logs-trace"><option value="all">전체 · 서로 섞인 3개 이벤트</option><option value="trace-order">주문 요청 · trace-order</option><option value="trace-search">검색 요청 · trace-search</option></select><label for="logs-format">표시 형식</label><select id="logs-format"><option value="raw">서비스별 기존 텍스트</option><option value="ecs">공통 JSON / ECS 예시</option></select><label for="logs-protocol">예외 응답 예시</label><select id="logs-protocol"><option value="rest">REST</option><option value="grpc">gRPC</option></select><button id="logs-reset" type="button">초기화</button><div class="demo-principle"><strong>같은 요청의 사건을 연결</strong><p>표준 로그·trace/span 연결과 공통 예외 형식의 설계 의도를 보여줍니다. Datadog 실제 조회·장애 자동 진단은 아닙니다.</p></div></div><div class="demo-review"><h4 id="logs-count">이벤트 3건</h4><pre id="logs-output" class="demo-code"></pre><h4>클라이언트 예외 응답</h4><pre id="logs-error" class="demo-code"></pre></div></div><p id="logs-status" class="demo-feedback" role="status" aria-live="polite" aria-atomic="true">전체 로그를 요청별로 좁혀 보세요.</p>
+    </section>
   </div>
 </section>

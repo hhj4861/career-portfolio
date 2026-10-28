@@ -64,7 +64,8 @@ def work_projects():
     result = []
     for i, p in enumerate(DATA['projects'], 1):
         rows = [('문제', p['problem']), ('내 역할', p['role']), ('접근·구현', p['approach']), ('결과·상태', p['result'])]
-        cta = f'<a class="text-link" href="{safe_url(p["demo"])}">검수 원리 데모 ↓</a>' if p.get('demo') else ''
+        demo_key = {'db-review':'dbq', 'qa-platform':'qa', 'release-validation':'release', 'logging-standards':'logs'}.get(p['id'], 'dbq')
+        cta = f'<a data-open-demo="{demo_key}" class="text-link" href="{safe_url(p["demo"])}">업무 흐름 체험 ↓</a>' if p.get('demo') else ''
         result.append(f'''<article class="project" id="{esc(p['id'])}">
 <div class="project-head"><span class="eyebrow">0{i} / {esc(p['category'])}</span><h3>{esc(p['title'])}</h3><p>{esc(p['subtitle'])}</p><span class="pill">{esc(p['status'])}</span><p class="stack">{esc(p['period'])}<br>{esc(p['stack'])}</p>{cta}</div>
 <div class="project-body">{''.join(f'<div class="case-row"><h4>{esc(label)}</h4><p>{esc(text)}</p></div>' for label, text in rows)}<p class="scope">{esc(p['scope'])}</p></div></article>''')
@@ -76,18 +77,20 @@ def career_projects(c):
     for p in c.get('projects', []):
         period = f'<span class="period">{esc(p["period"])}</span>' if p.get('period') else ''
         stack = f'<p>{esc(p["stack"])}</p>' if p.get('stack') else ''
-        parts.append(f'<section class="career-project"><h4>{esc(p["title"])} {period}</h4>{bullets(p["bullets"])}{stack}</section>')
+        groups = p.get('bullet_groups', [])
+        content = ''.join(f'<div class="career-detail"><h5>{esc(label)}</h5>{bullets(p["bullets"][start:end])}</div>' for label, start, end in groups) if groups else bullets(p['bullets'])
+        parts.append(f'<section class="career-project"><h4>{esc(p["title"])} {period}</h4>{content}{stack}</section>')
     return ''.join(parts)
 
 
 def careers(resume=False):
     result = []
-    for c in DATA['careers']:
+    for index, c in enumerate(DATA['careers']):
         body = career_projects(c)
         if not resume:
-            body = f'<details><summary>프로젝트별 역할·구현 내용 보기 ({len(c.get("projects", []))})</summary>{body}</details>'
+            body = f'<details{" open" if index < 2 else ""}><summary>프로젝트별 역할·구현 내용 보기 ({len(c.get("projects", []))})</summary>{body}</details>'
         stack = f'<p class="note">{esc(c["stack"])}</p>' if c.get('stack') else ''
-        result.append(f'''<article class="career"><div><h3>{esc(c['company'])}</h3><span class="muted">{esc(c['period'])}</span></div><div><p class="role">{esc(c['role'])}</p><p class="career-summary">{esc(c.get('summary'))}</p>{bullets(c.get('bullets', []))}{body}{stack}</div></article>''')
+        result.append(f'''<article class="career" id="career-{index}"><div><h3>{esc(c['company'])}</h3><span class="muted">{esc(c['period'])}</span></div><div><p class="role">{esc(c['role'])}</p><p class="career-summary">{esc(c.get('summary'))}</p>{bullets(c.get('bullets', []))}{body}{stack}</div></article>''')
     return ''.join(result)
 
 
@@ -128,11 +131,17 @@ def build_index():
 <section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="{asset('demo.js')}" defer></script></body></html>'''
 
 
+def resume_index():
+    count = sum(len(c.get('projects', [])) for c in DATA['careers'])
+    links = ''.join(f'<a href="#career-{i}">{esc(c["company"])}</a>' for i, c in enumerate(DATA['careers']))
+    return f'<aside class="resume-guide"><strong>경력 기술서 · {len(DATA["careers"])}개 회사 / {count}개 프로젝트</strong><p>프로젝트별 과제, 직접 맡은 구현, 검증과 현재 상태를 담았습니다. 회사명을 누르면 해당 경력으로 이동합니다.</p><div aria-label="회사별 경력 바로가기">{links}</div></aside>'
+
+
 def build_resume():
     return head('홍현종 | 경력 이력서', resume=True) + navigation(resume=True) + f'''
 <main id="main" class="resume-page">{review_banner()}<header class="resume-header"><div><p class="eyebrow">RESUME / {esc(DATA['updated'])}</p><h1>{esc(DATA['name'])}</h1><p>백엔드 · 개발 플랫폼 · 업무 자동화</p></div><div class="resume-contact"><a href="{safe_url(DATA['github'])}">github.com/hhj4861</a><br><a href="index.html">포트폴리오 · 업무 사례와 데모 ↗</a></div></header><p class="intro">{esc(DATA['summary'])}</p><ul class="summary-list">{''.join(f'<li>{esc(x)}</li>' for x in DATA['intro_points'])}</ul>
 <section class="section"><h2>핵심 기술과 경험</h2>{skills()}</section>
-<section class="section" id="experience"><h2>경력 상세</h2>{careers(resume=True)}</section>
+{resume_index()}<section class="section" id="experience"><h2>경력 상세 · 프로젝트별 수행 내용</h2>{careers(resume=True)}</section>
 <section class="section"><h2>참고 · 개인 프로젝트</h2>{personal_projects(resume=True)}</section>
 <section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="{asset('print.js')}" defer></script></body></html>'''
 
@@ -152,7 +161,7 @@ def build_readme():
         lines += [f'### {p["title"]}', '', p['result'], '']
         if p.get('link'):
             lines += [f'[코드 보기]({p["link"]})', '']
-    lines += ['## 로컬 실행 및 검증', '', 'Python 3와 정적 파일만으로 빌드됩니다.', '', '```bash', 'python3 scripts/build.py', 'python3 -m unittest discover -s tests -v', 'python3 -m http.server 8765', '```', '', '브라우저에서 `http://localhost:8765/`를 열고, 이력서는 `resume.html`에서 인쇄/PDF 저장할 수 있습니다.', '', '`profile.json`이 경력 내용의 기준입니다. `scripts/build.py`는 `index.html`, `resume.html`, `README.md`를 생성합니다. CSS와 데모는 소스 자산으로 보존합니다.', '', 'Playwright가 설치된 환경에서는 `BASE_URL=http://localhost:8765 node scripts/test_demo.cjs`로 데모 동작을 검사할 수 있습니다.', '', '## 공개 범위', '', '- 회사 업무의 상태는 프로젝트별로 구분합니다. 검수/파일럿을 운영 완료로 바꾸지 않습니다.', '- 데모는 가상 데이터로 동작하는 별도 설명용 시뮬레이션입니다. 실제 회사 서비스·데이터·코드를 포함하지 않으며 네트워크 전송이나 DB 실행을 하지 않습니다.', '- 회사 내부 URL, 원문 증거, 연락처, 인증정보는 저장하지 않습니다.', '- 로컬 빌드와 검증은 배포를 수행하지 않습니다.', '']
+    lines += ['## 로컬 실행 및 검증', '', 'Python 3와 정적 파일만으로 빌드됩니다.', '', '```bash', 'python3 scripts/build.py', 'python3 -m unittest discover -s tests -v', 'python3 -m http.server 8765', '```', '', '브라우저에서 `http://localhost:8765/`를 열고, 이력서는 `resume.html`에서 인쇄/PDF 저장할 수 있습니다.', '', '`profile.json`이 경력 내용의 기준입니다. `scripts/build.py`는 `index.html`, `resume.html`, `README.md`를 생성합니다. CSS와 데모는 소스 자산으로 보존합니다.', '', '`node scripts/test_demo_state.cjs`는 판단 규칙을 검사합니다. Playwright가 설치된 환경에서는 `BASE_URL=http://localhost:8765 node scripts/test_demo.cjs`로 네 가지 데모·모바일·키보드 동작을 검사할 수 있습니다.', '', '## 공개 범위', '', '- 회사 업무의 상태는 프로젝트별로 구분합니다. 검수/파일럿을 운영 완료로 바꾸지 않습니다.', '- 데모는 가상 데이터로 동작하는 별도 설명용 시뮬레이션입니다. 실제 회사 서비스·데이터·코드를 포함하지 않으며 네트워크 전송이나 DB 실행을 하지 않습니다.', '- 회사 내부 URL, 원문 증거, 연락처, 인증정보는 저장하지 않습니다.', '- 로컬 빌드와 검증은 배포를 수행하지 않습니다.', '']
     return '\n'.join(lines)
 
 
