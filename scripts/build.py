@@ -121,6 +121,7 @@ def build_index():
     headline = '<br>'.join(esc(line) for line in DATA['headline'].splitlines())
     demo_file = ROOT / 'templates/demo.html'
     demo = demo_file.read_text(encoding='utf-8') if demo_file.exists() else '<section class="section" id="demo"><h2>검수 워크플로 데모</h2><p>데모 준비 중</p></section>'
+    demo = demo.replace('__QA_REFERENCE_URL__', asset('qa-reference.html'))
     return head('홍현종 | Backend & Developer Platform') + navigation() + f'''
 <main id="main">{review_banner()}<section class="hero"><div><p class="eyebrow">Backend · Developer Platform · Automation</p><h1>{headline}</h1><p class="intro">{esc(DATA['summary'])}</p><div class="buttons"><a class="button primary" href="#projects">최근 업무 사례 보기 ↓</a><a class="button" href="resume.html">이력서 읽기 ↗</a><a class="button" href="#demo">데모 체험</a></div></div><aside class="hero-aside" aria-label="경력 개요"><div class="portrait-mark" aria-hidden="true">HHJ</div><p class="current-role">현재 집중하는 일<strong>개발 플랫폼 · 업무 자동화</strong><span class="muted">SOCAR · 2025.03–현재</span></p><ol class="path"><li><strong>금융 시스템</strong><span>2013–2017</span></li><li><strong>결제 · 서비스 연동</strong><span>2017–2022</span></li><li><strong>커머스 · 개발 리딩</strong><span>2022–2025</span></li><li><strong>개발 플랫폼</strong><span>2025–현재</span></li></ol></aside></section>
 <section class="section" aria-label="핵심 경험">{skills()}</section>

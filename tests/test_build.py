@@ -14,7 +14,7 @@ class Document(HTMLParser):
         a=dict(attrs)
         if 'id' in a: self.ids.append(a['id'])
         if tag=='a': self.links.append(a.get('href',''))
-        if tag=='script' and a.get('src'): self.assets.append(a['src'])
+        if tag in ('script', 'iframe') and a.get('src'): self.assets.append(a['src'])
         if tag=='link' and a.get('href'): self.assets.append(a['href'])
 
 class BuildTests(unittest.TestCase):
@@ -37,10 +37,10 @@ class BuildTests(unittest.TestCase):
             self.assertEqual(len(doc.ids),len(set(doc.ids)))
             for link in doc.links:
                 if link.startswith('#'): self.assertIn(link[1:],doc.ids)
-                elif not link.startswith(('https://','mailto:')): self.assertTrue((ROOT/link.split('#')[0]).is_file(),link)
+                elif not link.startswith(('https://','mailto:')): self.assertTrue((ROOT/link.split('#')[0].split('?')[0]).is_file(),link)
             for asset in doc.assets: self.assertTrue((ROOT/asset.split('?')[0]).is_file(),asset)
     def test_no_private_data_or_unverified_metrics(self):
-        for name in ['profile.json','index.html','resume.html','README.md']:
+        for name in ['profile.json','index.html','resume.html','README.md','qa-reference.html']:
             content=(ROOT/name).read_text()
             for private in ['socar.slack.com','atlassian.net','010-','9·17·28','누락·중복 0건','320건','3.5분']:
                 self.assertNotIn(private,content)

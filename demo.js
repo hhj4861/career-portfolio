@@ -22,8 +22,7 @@
     ];
     return {checks,ready:checks.every(c=>c.ok)};
   }
-  function qaGate(state) { return state.generated && state.reviewed && state.readyApproved && (state.fixedApproved || state.excluded); }
-  if(typeof module!=='undefined'&&module.exports) module.exports={blank,dbResult,releaseCheck,qaGate};
+  if(typeof module!=='undefined'&&module.exports) module.exports={blank,dbResult,releaseCheck};
   if(typeof document==='undefined') return;
   const root=document.getElementById('demo');
   if(!root||root.dataset.initialized==='true') return;
@@ -83,59 +82,6 @@
   el('dbq-next').addEventListener('click',()=>{if(!dbResult(kind(),current()).ready)return;current().next++;renderDB();put('dbq-status',el('dbq-next-result').textContent);});
   el('dbq-reset').addEventListener('click',()=>{states[key()]=blank();renderDB();put('dbq-status','현재 경로·예시만 초기화했습니다.');});
   renderDB();
-  const newQA=()=>({view:'interview',interview:'',generated:false,reviewed:false,fixed:false,evidence:false,readyApproved:false,fixedApproved:false,excluded:false,confirmed:false,ran:false,retried:false});
-  let qa=newQA();
-  const qaSay=message=>feedback('qa-status',message);
-  function renderQA(){
-    const stages=['interview','generation','review','execution'];
-    const enabled={interview:true,generation:qa.generated,review:qa.reviewed,execution:qa.confirmed};
-    const helpers={interview:'기획 문서에서 빠진 내용을 질문합니다. 모르면 답을 추측하지 않고 미확인으로 남길 수 있습니다.',generation:'문서와 코드를 분석해 TC 초안을 만들고, 보완이 필요한 항목을 표시합니다.',review:'카드의 기대 결과와 근거를 확인하세요. AI의 보완 제안과 사람의 근거 확증은 별도 단계입니다.',execution:'리뷰에서 확정된 항목만 실행합니다. 플랫폼을 바꾸면 이전 실행 결과는 초기화됩니다.'};
-    root.querySelectorAll('[data-qa-stage]').forEach(section=>{section.hidden=section.dataset.qaStage!==qa.view;});
-    root.querySelectorAll('[data-qa-view]').forEach(button=>{const view=button.dataset.qaView;button.disabled=!enabled[view];button.classList.toggle('is-complete',!!enabled[view]&&stages.indexOf(view)<stages.indexOf(qa.view));if(view===qa.view)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');});
-    put('qa-helper-text',helpers[qa.view]);
-    const reviewedCount=Number(qa.readyApproved)+Number(qa.fixedApproved||qa.excluded);
-    put('qa-progress',`${reviewedCount} / 2 검토`);el('qa-progress-bar').style.width=`${reviewedCount*50}%`;
-    el('qa-generate').disabled=qa.generated;el('qa-record').disabled=qa.generated;el('qa-interview').disabled=qa.generated;
-    el('qa-review').disabled=!qa.generated||qa.reviewed;
-    el('qa-actions').hidden=!qa.reviewed||qa.confirmed;
-    el('qa-execution').hidden=!qa.confirmed;
-    el('qa-approve-ready').disabled=qa.readyApproved;
-    el('qa-fix').disabled=qa.fixed||qa.excluded;
-    el('qa-evidence').disabled=!qa.fixed||qa.excluded||qa.fixedApproved;
-    el('qa-evidence').checked=qa.evidence;
-    el('qa-approve-fixed').disabled=!qa.fixed||!qa.evidence||qa.excluded||qa.fixedApproved;
-    el('qa-exclude').disabled=qa.excluded||qa.fixedApproved;
-    el('qa-confirm').disabled=!qaGate(qa);
-    el('qa-retry').disabled=!qa.ran||qa.retried||qa.excluded;
-    put('qa-interview-state',qa.interview==='fact'?'가상 정책 자료를 확인했다고 기록했습니다. TC 근거는 카드 리뷰에서 별도로 확증합니다.':qa.interview==='unknown'?'모름으로 기록했습니다. 업무 사실을 임의로 채우지 않습니다.':'인터뷰를 건너뛰어도 TC 생성이 가능합니다.');
-    const pending=[!qa.readyApproved?'TC 1 승인':null,!(qa.fixedApproved||qa.excluded)?'TC 2 보완·확증·승인 또는 제외':null].filter(Boolean);
-    put('qa-gate-hint',pending.length?'남은 작업: '+pending.join(' · '):'카드 검토 완료. ‘리뷰 확정’을 누르세요.');
-    put('qa-review-result',!qa.generated?'TC 생성 전':!qa.reviewed?'가상 문서·코드에서 초안 2개 생성 · 카드 리뷰를 열어 주세요':qa.confirmed?`리뷰 확정 · 실행 대상 ${qa.excluded?1:2}개${qa.excluded?' · 미완성 1개 제외':''}`:'카드별 상태를 확인하고 검토하세요.');
-    const cards=el('qa-cases');cards.replaceChildren();
-    if(!qa.generated){cards.append(node('p','아직 생성된 TC가 없습니다.'));}
-    else {
-      const a=node('article','');a.className='qa-case';a.append(node('strong',`TC 1 · 구독 취소 완료 ${qa.readyApproved?'✓ 승인':'· 리뷰 필요'}`),node('p','조건: 활성 구독 · 동작: 취소 확인 · 기대: 취소 완료가 표시된다.'));
-      const b=node('article','');b.className='qa-case';b.append(node('strong',`TC 2 · 취소 시 환불 안내 ${qa.excluded?'· 이번 실행 제외':qa.fixedApproved?'✓ 승인':'· 보완 필요'}`),node('p',qa.fixed?'기대: 정책에 따른 환불 안내가 표시된다.':'기대 결과: 미작성 · 실행 가능한 기대 결과가 필요합니다.'),node('p',qa.evidence?'근거: 사용자가 가상 정책 자료를 확인했습니다.':'근거: 미확인 · AI 보완만으로 확증되지 않습니다.'));
-      cards.append(a,b);
-    }
-    const runner=({web:'웹 / Playwright',android:'Android / Appium',ios:'iOS / 모바일 자동화'})[el('qa-target').value];
-    put('qa-output',!qa.confirmed?'리뷰 확정 후 실행할 수 있습니다.':!qa.ran?`실행 준비 · ${runner} · 확정 TC ${qa.excluded?1:2}개`:`${runner} · 가상 결과\nTC 1 PASS · 취소 완료 확인${qa.excluded?'\nTC 2 제외 · 검토 미완성':qa.retried?'\nTC 2 PASS · 재실행에서 환불 안내 확인\n이전 실행: TC 2 FAIL · 기대한 안내 미표시':'\nTC 2 FAIL · 기대한 환불 안내 미표시'}\n\n리포트: ${qa.excluded?'PASS 1 · 제외 1':qa.retried?'PASS 2 · 이전 실패 이력 보존':'PASS 1 · FAIL 1'}\n실제 서비스 전송 없음`);
-  }
-  root.querySelectorAll('[data-qa-view]').forEach(button=>button.addEventListener('click',()=>{if(button.disabled)return;qa.view=button.dataset.qaView;renderQA();}));
-  el('qa-interview').addEventListener('change',()=>{qa.interview='';renderQA();qaSay('답변 선택이 바뀌었습니다. 기록하거나 인터뷰를 건너뛰고 TC를 생성하세요.');});
-  el('qa-record').addEventListener('click',()=>{if(qa.generated){qaSay('이미 생성한 초안은 유지됩니다. 답변을 바꾸려면 프로젝트를 초기화하세요.');return;}qa.interview=el('qa-interview').value;renderQA();qaSay(qa.interview==='unknown'?'모름을 기록했습니다. 미확인 정보는 추측하지 않고 ‘TC 초안 생성’으로 진행할 수 있습니다.':'가상 답변을 기록했습니다. 다음으로 ‘TC 초안 생성’을 누르세요.');});
-  el('qa-generate').addEventListener('click',()=>{qa={...newQA(),view:'generation',interview:qa.interview,generated:true};renderQA();qaSay('가상 문서·코드로 TC 2개를 생성했습니다. 다음으로 ‘카드 리뷰 열기’를 누르세요.');});
-  el('qa-review').addEventListener('click',()=>{qa.reviewed=true;qa.view='review';renderQA();qaSay('TC 1을 승인하고, TC 2는 보완·근거 확증 후 승인하거나 실행에서 제외하세요.');});
-  el('qa-approve-ready').addEventListener('click',()=>{qa.readyApproved=true;renderQA();qaSay('TC 1을 승인했습니다. TC 2의 근거와 기대 결과를 확인하세요.');});
-  el('qa-fix').addEventListener('click',()=>{qa.fixed=true;qa.evidence=false;qa.fixedApproved=false;renderQA();qaSay('가상 보완 제안을 적용했습니다. 기대 결과를 채워도 근거는 미확인입니다. 자료를 읽고 직접 확증하세요.');});
-  el('qa-evidence').addEventListener('change',()=>{qa.evidence=el('qa-evidence').checked;qa.fixedApproved=false;renderQA();qaSay(qa.evidence?'가상 정책 자료를 직접 확인했습니다. ‘TC 2 승인’을 누르세요.':'근거 확증을 취소했습니다. TC 2 승인은 다시 필요합니다.');});
-  el('qa-approve-fixed').addEventListener('click',()=>{if(!qa.fixed||!qa.evidence)return;qa.fixedApproved=true;renderQA();qaSay(qaGate(qa)?'두 카드를 승인했습니다. ‘리뷰 확정’을 누르세요.':'TC 2를 승인했습니다. TC 1도 검토하세요.');});
-  el('qa-exclude').addEventListener('click',()=>{qa.excluded=true;qa.evidence=false;qa.fixedApproved=false;renderQA();qaSay(qaGate(qa)?'미완성 TC 2를 이번 실행에서 제외합니다. ‘리뷰 확정’을 누르세요.':'TC 2를 제외했습니다. TC 1도 검토하세요.');});
-  el('qa-confirm').addEventListener('click',()=>{if(!qaGate(qa))return;qa.confirmed=true;qa.view='execution';renderQA();qaSay(`리뷰 확정. ${qa.excluded?'TC 1개만':'TC 2개를'} 가상 실행 대상으로 준비했습니다.`);});
-  el('qa-run').addEventListener('click',()=>{if(!qa.confirmed)return;qa.ran=true;qa.retried=false;renderQA();qaSay(qa.excluded?'가상 실행 완료: PASS 1, 미완성으로 제외 1.':'가상 실행 완료: PASS 1, FAIL 1. 실패한 TC를 재실행할 수 있습니다.');});
-  el('qa-retry').addEventListener('click',()=>{if(!qa.ran||qa.excluded)return;qa.retried=true;renderQA();qaSay('실패 TC의 가상 재실행이 통과했습니다. 이전 실패 이력도 리포트에 남습니다.');});
-  el('qa-target').addEventListener('change',()=>{qa.ran=false;qa.retried=false;renderQA();qaSay('실행 대상을 바꿨습니다. 이전 플랫폼의 결과를 재사용하지 않습니다.');});
-  el('qa-reset').addEventListener('click',()=>{qa=newQA();el('qa-interview').value='unknown';el('qa-target').value='web';renderQA();qaSay('프로젝트를 초기화했습니다. 인터뷰 또는 TC 생성부터 다시 시작하세요.');});renderQA();
   el('release-form').addEventListener('submit',event=>{
     event.preventDefault();const request={repo:el('release-repo').value,date:el('release-date').value,note:el('release-note').value,linked:el('release-linked').value};const result=releaseCheck(request);
     list('release-results',result.checks.map(c=>`${c.ok?'통과':'보완'} · ${c.label}: ${c.ok?'예시 기준 충족':c.detail}`));
