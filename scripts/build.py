@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = json.loads((ROOT / 'profile.json').read_text(encoding='utf-8'))
+PUBLIC_REPOS = json.loads((ROOT / 'public_repos.json').read_text(encoding='utf-8'))
 
 
 def esc(value):
@@ -100,7 +101,14 @@ def personal_projects(resume=False):
         link = f'<a class="text-link" href="{safe_url(p["link"])}">GitHub 코드 ↗</a>' if p.get('link') else '<span class="note">비공개 · 소개만 공개</span>'
         description = p['approach'] if resume else p['result']
         result.append(f'<article class="personal-card"><span class="pill">개인 연구·실험</span><h3>{esc(p["title"])}</h3><p>{esc(description)}</p><p class="stack">{esc(p["stack"])}</p>{link}</article>')
-    return '<div class="personal-grid">' + ''.join(result) + '</div>'
+    if resume:
+        return '<div class="personal-grid">' + ''.join(result) + '</div>'
+    existing_links = {p['link'].rstrip('/') for p in DATA['personal_projects'] if p.get('link')}
+    for p in PUBLIC_REPOS:
+        if p['link'].rstrip('/') in existing_links:
+            continue
+        result.append(f'<article class="personal-card"><span class="pill">GitHub 공개 저장소</span><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p><p class="stack">{esc(p["stack"])}</p><a class="text-link" href="{safe_url(p["link"])}">GitHub 코드 ↗</a></article>')
+    return '<div class="personal-carousel" aria-label="개인 프로젝트 모음"><div class="carousel-toolbar"><p>좌우로 넘겨 더 많은 프로젝트를 살펴보세요.</p><div class="carousel-controls" hidden><button type="button" data-carousel-prev aria-label="이전 프로젝트">←</button><span data-carousel-status aria-live="polite"></span><button type="button" data-carousel-next aria-label="다음 프로젝트">→</button></div></div><div class="personal-grid personal-track" tabindex="0" aria-label="개인 프로젝트 목록">' + ''.join(result) + '</div></div>'
 
 
 def education():
@@ -128,8 +136,8 @@ def build_index():
 <section class="section" id="projects">{section_title('01 / SELECTED WORK', '최근 회사 업무', '쏘카에서 수행한 개발 플랫폼 업무를 문제, 역할, 구현과 현재 상태로 정리했습니다.')}{work_projects()}</section>
 {demo}
 <section class="section" id="experience">{section_title('03 / EXPERIENCE', '경력과 문제 해결', '회사의 규모나 기술 목록보다 직접 맡은 업무와 해결 과정을 중심으로 살펴보세요.')}{careers()}</section>
-<section class="section" id="personal">{section_title('04 / PERSONAL LAB', '참고 · 개인 프로젝트', '생성 API와 데이터 파이프라인을 탐구한 개인 실험입니다. 회사 성과와 별도로 소개합니다.')}{personal_projects()}</section>
-<section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="{asset('demo.js')}" defer></script></body></html>'''
+<section class="section" id="personal">{section_title('04 / PERSONAL LAB', '참고 · 개인 프로젝트', '공개 GitHub 저장소와 개인 실험을 회사 업무와 구분해 소개합니다.')}{personal_projects()}</section>
+<section class="section">{education()}</section>{review_notice()}</main>{footer()}<script src="{asset('demo.js')}" defer></script><script src="{asset('personal-carousel.js')}" defer></script></body></html>'''
 
 
 def resume_index():

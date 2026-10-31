@@ -1,0 +1,107 @@
+[
+  {
+    "name": "replay-live",
+    "title": "Replay Live POC",
+    "description": "녹화한 MP4를 예약 시간에 실시간 속도로 YouTube Live에 송출하는 실험입니다.",
+    "stack": "Python · FFmpeg · SQLite",
+    "link": "https://github.com/hhj4861/replay-live"
+  },
+  {
+    "name": "rescene-game",
+    "title": "리센느 작은 오락실",
+    "description": "다섯 가지 60초 브라우저 게임으로 구성한 비공식 팬 게임입니다.",
+    "stack": "브라우저 게임 · Node.js",
+    "link": "https://github.com/hhj4861/rescene-game"
+  },
+  {
+    "name": "commerce-automation-kit",
+    "title": "커머스 자동화 키트",
+    "description": "공유 계약을 바탕으로 키워드 분석 등 독립적인 커머스 자동화 모듈을 조합하는 프로젝트입니다.",
+    "stack": "npm workspaces · TypeScript",
+    "link": "https://github.com/hhj4861/commerce-automation-kit"
+  },
+  {
+    "name": "claude-flow-plus",
+    "title": "Claude-Flow-Plus",
+    "description": "기존 claude-flow를 확장해 동적 라우팅과 에이전트 상태·토큰 표시를 탐구한 포크입니다.",
+    "stack": "AI 에이전트 · 오케스트레이션",
+    "link": "https://github.com/hhj4861/claude-flow-plus"
+  },
+  {
+    "name": "shared-claude-agents",
+    "title": "Shared Claude Agents",
+    "description": "Claude Code용 에이전트, 스킬과 공통 표준 문서를 관리합니다.",
+    "stack": "Claude Code · 에이전트 · 스킬",
+    "link": "https://github.com/hhj4861/shared-claude-agents"
+  },
+  {
+    "name": "wp-auto-blog",
+    "title": "WordPress 자동 블로그",
+    "description": "트렌드 수집부터 콘텐츠·이미지 생성과 WordPress 발행까지 연결하는 파이프라인입니다.",
+    "stack": "Python · WordPress API · AI",
+    "link": "https://github.com/hhj4861/wp-auto-blog"
+  },
+  {
+    "name": "flight-crew-prep",
+    "title": "Flight Crew Prep",
+    "description": "Next.js 기반 공개 프로젝트입니다. 상세 기능은 저장소에서 확인할 수 있습니다.",
+    "stack": "Next.js",
+    "link": "https://github.com/hhj4861/flight-crew-prep"
+  },
+  {
+    "name": "studio-core",
+    "title": "Studio Core",
+    "description": "인증과 유틸리티, Supabase 연동을 제공하는 공통 라이브러리입니다.",
+    "stack": "Python · Supabase",
+    "link": "https://github.com/hhj4861/studio-core"
+  },
+  {
+    "name": "ui-design-system",
+    "title": "Studio UI Design System",
+    "description": "공통 디자인 토큰과 React·Streamlit 컴포넌트를 구성한 멀티 프레임워크 디자인 시스템입니다.",
+    "stack": "React · Streamlit · 디자인 토큰",
+    "link": "https://github.com/hhj4861/ui-design-system"
+  },
+  {
+    "name": "dog-diary-frontend",
+    "title": "강아지 일기장",
+    "description": "강아지별 일기와 사진을 관리하고 AI 일기 생성을 연결하는 웹 애플리케이션입니다.",
+    "stack": "TypeScript · MCP · AI",
+    "link": "https://github.com/hhj4861/dog-diary-frontend"
+  },
+  {
+    "name": "portfolio_ai",
+    "title": "portfolio_ai",
+    "description": "공개 저장소입니다. 별도의 프로젝트 소개 문서는 확인되지 않았습니다.",
+    "stack": "GitHub 공개 저장소",
+    "link": "https://github.com/hhj4861/portfolio_ai"
+  },
+  {
+    "name": "notice",
+    "title": "notice",
+    "description": "공개 저장소입니다. 별도의 프로젝트 소개 문서는 확인되지 않았습니다.",
+    "stack": "GitHub 공개 저장소",
+    "link": "https://github.com/hhj4861/notice"
+  },
+  {
+    "name": "swagger_test",
+    "title": "swagger_test",
+    "description": "공개 저장소입니다. 현재 기본 브랜치의 코드가 비어 있습니다.",
+    "stack": "GitHub 공개 저장소",
+    "link": "https://github.com/hhj4861/swagger_test"
+  },
+  {
+    "name": "mcp",
+    "title": "mcp",
+    "description": "공개 저장소입니다. 현재 기본 브랜치의 코드가 비어 있습니다.",
+    "stack": "GitHub 공개 저장소",
+    "link": "https://github.com/hhj4861/mcp"
+  },
+  {
+    "name": "career-portfolio",
+    "title": "Career Portfolio",
+    "description": "경력과 프로젝트, 인터랙티브 업무 데모를 소개하는 현재 포트폴리오입니다.",
+    "stack": "Python · HTML · JavaScript",
+    "link": "https://github.com/hhj4861/career-portfolio"
+  }
+]
