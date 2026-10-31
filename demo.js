@@ -46,6 +46,23 @@
     });
   });
   document.querySelectorAll('[data-open-demo]').forEach(link=>link.addEventListener('click',()=>{const tab=tabs.find(t=>t.dataset.tab===link.dataset.openDemo);if(tab)activate(tab);}));
+  const wizards = {};
+  root.querySelectorAll('[data-wizard]').forEach(wizard=>{
+    const panels=[...wizard.querySelectorAll('[data-step]')], buttons=[...wizard.querySelectorAll('[data-step-target]')];
+    let active=0;
+    function show(index){
+      active=Math.max(0,Math.min(index,panels.length-1));
+      panels.forEach((panel,i)=>{panel.hidden=i!==active;});
+      buttons.forEach((button,i)=>{button.classList.toggle('is-current',i===active);if(i===active)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');});
+      wizard.querySelector('[data-step-prev]').disabled=active===0;
+      wizard.querySelector('[data-step-next]').disabled=active===panels.length-1;
+      wizard.querySelector('[data-step-progress]').textContent=`${active+1} / ${panels.length}`;
+    }
+    buttons.forEach((button,i)=>button.addEventListener('click',()=>show(i)));
+    wizard.querySelector('[data-step-prev]').addEventListener('click',()=>show(active-1));
+    wizard.querySelector('[data-step-next]').addEventListener('click',()=>show(active+1));
+    wizards[wizard.dataset.wizard]=show;show(0);
+  });
   const states={};
   const kind=()=>el('dbq-scenario').value;
   const mode=()=>el('dbq-mode').value;
@@ -76,24 +93,24 @@
   }
   ['dbq-mode','dbq-scenario'].forEach(id=>el(id).addEventListener('change',()=>{renderDB();put('dbq-status','예시를 전환했습니다. 각 경로·예시의 상태는 이 페이지 안에서 보존됩니다.');}));
   function runDB(){const s=current();s.runs++;s.applied=s.answer==='fact';s.next=0;renderDB();put('dbq-status',dbResult(kind(),s).ready?'재검수 결과: PASS · 개발자 확인 0건. DBA 승인·실행은 별도입니다.':s.answer==='vague'?'승인한다는 말은 업무 근거가 아닙니다. 필요한 업무 질문을 유지합니다.':'입력에 따른 가상 결과입니다. 미해결 항목과 다음 행동을 확인하세요.');}
-  el('dbq-run').addEventListener('click',runDB);el('dbq-rerun').addEventListener('click',runDB);
+  el('dbq-run').addEventListener('click',()=>{runDB();wizards.dbq(1);});el('dbq-rerun').addEventListener('click',runDB);
   el('dbq-answer').addEventListener('change',()=>{const s=current();s.answer=el('dbq-answer').value;s.applied=false;s.next=0;renderDB();put('dbq-status','답변이 바뀌었습니다. 이전 완료 상태를 사용하지 않으며 재검수가 필요합니다.');});
-  el('dbq-source').addEventListener('click',()=>{const s=current();s.sourceFixed=true;s.runs=0;s.applied=false;s.next=0;renderDB();put('dbq-status','가상 소스·DB 설정을 보완했습니다. 변경된 입력으로 검수를 다시 시작하세요.');});
+  el('dbq-source').addEventListener('click',()=>{const s=current();s.sourceFixed=true;s.runs=0;s.applied=false;s.next=0;renderDB();put('dbq-status','가상 소스·DB 설정을 보완했습니다. 변경된 입력으로 검수를 다시 시작하세요.');wizards.dbq(0);});
   el('dbq-next').addEventListener('click',()=>{if(!dbResult(kind(),current()).ready)return;current().next++;renderDB();put('dbq-status',el('dbq-next-result').textContent);});
-  el('dbq-reset').addEventListener('click',()=>{states[key()]=blank();renderDB();put('dbq-status','현재 경로·예시만 초기화했습니다.');});
+  el('dbq-reset').addEventListener('click',()=>{states[key()]=blank();renderDB();put('dbq-status','현재 경로·예시만 초기화했습니다.');wizards.dbq(0);});
   renderDB();
   el('release-form').addEventListener('submit',event=>{
     event.preventDefault();const request={repo:el('release-repo').value,date:el('release-date').value,note:el('release-note').value,linked:el('release-linked').value};const result=releaseCheck(request);
     list('release-results',result.checks.map(c=>`${c.ok?'통과':'보완'} · ${c.label}: ${c.ok?'예시 기준 충족':c.detail}`));
     put('release-notice',`[가상 알림 미리보기]\n${request.repo} / ${request.date||'날짜 미입력'}\n${result.ready?'요청 검증 통과 · 승인 절차 대기':'배포 요청 보완 필요'}\n${request.note||'변경 내용 미입력'}`);
-    feedback('release-status',result.ready?'검증 통과: 필수값·티켓·중복을 모두 확인했습니다. 실제 승인·배포는 진행하지 않았습니다.':`보완 ${result.checks.filter(c=>!c.ok).length}건: ${result.checks.filter(c=>!c.ok).map(c=>c.label).join(' · ')}. ‘2. 보완된 예시 채우기’ 후 다시 검증해 보세요.`);
+    wizards.release(1);feedback('release-status',result.ready?'검증 통과: 필수값·티켓·중복을 모두 확인했습니다. 실제 승인·배포는 진행하지 않았습니다.':`보완 ${result.checks.filter(c=>!c.ok).length}건: ${result.checks.filter(c=>!c.ok).map(c=>c.label).join(' · ')}. 이전 단계에서 보완하고 다시 검증해 보세요.`);
   });
   function clearRelease(){list('release-results',['입력 변경 · 다시 검증이 필요합니다.']);put('release-notice','현재 입력에 대한 검증·알림 미리보기 없음');put('release-status','입력이 변경되어 이전 검증 결과를 폐기했습니다.');}
   el('release-form').addEventListener('input',clearRelease);el('release-form').addEventListener('change',clearRelease);
-  el('release-example').addEventListener('click',()=>{el('release-repo').value='catalog-api';el('release-date').value='2026-11-03';el('release-note').value='결제 오류 메시지 개선';el('release-linked').value='ready';clearRelease();feedback('release-status','가상 보완 내용을 채웠습니다. ‘1. 요청 검증’을 다시 눌러 결과를 비교하세요.');});
-  el('release-reset').addEventListener('click',()=>{el('release-form').reset();clearRelease();});
+  el('release-example').addEventListener('click',()=>{el('release-repo').value='catalog-api';el('release-date').value='2026-11-03';el('release-note').value='결제 오류 메시지 개선';el('release-linked').value='ready';clearRelease();feedback('release-status','가상 보완 내용을 채웠습니다. ‘요청 검증’을 다시 눌러 결과를 비교하세요.');});
+  el('release-reset').addEventListener('click',()=>{el('release-form').reset();clearRelease();wizards.release(0);});
   const events=[{service:'checkout-api',trace:'trace-order',span:'span-01',message:'결제 요청',level:'info'},{service:'search-api',trace:'trace-search',span:'span-02',message:'상품 검색 완료',level:'info'},{service:'payment-api',trace:'trace-order',span:'span-03',message:'결제 제공자 응답 시간 초과',level:'error'}];
   function renderLogs(){const trace=el('logs-trace').value;const selected=events.filter(e=>trace==='all'||e.trace===trace);put('logs-count',`이벤트 ${selected.length}건`);put('logs-output',selected.map(e=>el('logs-format').value==='ecs'?JSON.stringify({'service.name':e.service,'trace.id':e.trace,'span.id':e.span,'log.level':e.level,message:e.message},null,2):`[${e.service}] ${e.level.toUpperCase()} ${e.message}\ntrace=${e.trace} span=${e.span}`).join('\n\n'));put('logs-explanation',trace==='trace-order'?'주문 서비스가 결제를 요청했고, 같은 trace-order를 가진 결제 서비스에서 응답 시간 초과가 발생했습니다. 서로 다른 서비스의 로그 두 건을 하나의 요청으로 연결한 결과입니다.':trace==='trace-search'?'검색 요청은 trace-search로 별도 처리되었고 예시 로그에는 오류가 없습니다. 주문 장애와는 다른 요청입니다.':'서로 다른 요청 2개가 섞여 있습니다. ‘주문 요청 · trace-order’를 선택하면 주문→결제의 연결과 오류 지점을 확인할 수 있습니다.');put('logs-error',trace==='trace-search'?'선택한 검색 요청에는 오류 응답이 없습니다.':el('logs-protocol').value==='rest'?'주문 요청의 예시 응답 · HTTP 504\n{"error":{"code":504,"status":"DEADLINE_EXCEEDED",\n "message":"결제 제공자 응답 시간 초과"}}':'주문 요청의 예시 응답 · gRPC status: DEADLINE_EXCEEDED (4)\nmessage: 결제 제공자 응답 시간 초과');put('logs-status',`${trace==='all'?'전체 요청':trace} · 이벤트 ${selected.length}건. 로그 형식과 클라이언트 응답은 같은 오류의 서로 다른 표현입니다.`);}
-  ['logs-trace','logs-format','logs-protocol'].forEach(id=>el(id).addEventListener('change',renderLogs));el('logs-reset').addEventListener('click',()=>{el('logs-trace').value='all';el('logs-format').value='raw';el('logs-protocol').value='rest';renderLogs();});renderLogs();
+  ['logs-trace','logs-format','logs-protocol'].forEach(id=>el(id).addEventListener('change',renderLogs));el('logs-reset').addEventListener('click',()=>{el('logs-trace').value='all';el('logs-format').value='raw';el('logs-protocol').value='rest';renderLogs();wizards.logs(0);});renderLogs();
   root.querySelector('[data-demo-app]').hidden=false;
 })();
