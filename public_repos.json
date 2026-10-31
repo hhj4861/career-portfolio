@@ -82,26 +82,5 @@
     "description": "공개 저장소입니다. 별도의 프로젝트 소개 문서는 확인되지 않았습니다.",
     "stack": "GitHub 공개 저장소",
     "link": "https://github.com/hhj4861/notice"
-  },
-  {
-    "name": "swagger_test",
-    "title": "swagger_test",
-    "description": "공개 저장소입니다. 현재 기본 브랜치의 코드가 비어 있습니다.",
-    "stack": "GitHub 공개 저장소",
-    "link": "https://github.com/hhj4861/swagger_test"
-  },
-  {
-    "name": "mcp",
-    "title": "mcp",
-    "description": "공개 저장소입니다. 현재 기본 브랜치의 코드가 비어 있습니다.",
-    "stack": "GitHub 공개 저장소",
-    "link": "https://github.com/hhj4861/mcp"
-  },
-  {
-    "name": "career-portfolio",
-    "title": "Career Portfolio",
-    "description": "경력과 프로젝트, 인터랙티브 업무 데모를 소개하는 현재 포트폴리오입니다.",
-    "stack": "Python · HTML · JavaScript",
-    "link": "https://github.com/hhj4861/career-portfolio"
   }
 ]
