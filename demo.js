@@ -109,8 +109,23 @@
   el('release-form').addEventListener('input',clearRelease);el('release-form').addEventListener('change',clearRelease);
   el('release-example').addEventListener('click',()=>{el('release-repo').value='catalog-api';el('release-date').value='2026-11-03';el('release-note').value='결제 오류 메시지 개선';el('release-linked').value='ready';clearRelease();feedback('release-status','가상 보완 내용을 채웠습니다. ‘요청 검증’을 다시 눌러 결과를 비교하세요.');});
   el('release-reset').addEventListener('click',()=>{el('release-form').reset();clearRelease();wizards.release(0);});
-  const events=[{service:'checkout-api',trace:'trace-order',span:'span-01',message:'결제 요청',level:'info'},{service:'search-api',trace:'trace-search',span:'span-02',message:'상품 검색 완료',level:'info'},{service:'payment-api',trace:'trace-order',span:'span-03',message:'결제 제공자 응답 시간 초과',level:'error'}];
-  function renderLogs(){const trace=el('logs-trace').value;const selected=events.filter(e=>trace==='all'||e.trace===trace);put('logs-count',`이벤트 ${selected.length}건`);put('logs-output',selected.map(e=>el('logs-format').value==='ecs'?JSON.stringify({'service.name':e.service,'trace.id':e.trace,'span.id':e.span,'log.level':e.level,message:e.message},null,2):`[${e.service}] ${e.level.toUpperCase()} ${e.message}\ntrace=${e.trace} span=${e.span}`).join('\n\n'));put('logs-explanation',trace==='trace-order'?'주문 서비스가 결제를 요청했고, 같은 trace-order를 가진 결제 서비스에서 응답 시간 초과가 발생했습니다. 서로 다른 서비스의 로그 두 건을 하나의 요청으로 연결한 결과입니다.':trace==='trace-search'?'검색 요청은 trace-search로 별도 처리되었고 예시 로그에는 오류가 없습니다. 주문 장애와는 다른 요청입니다.':'서로 다른 요청 2개가 섞여 있습니다. ‘주문 요청 · trace-order’를 선택하면 주문→결제의 연결과 오류 지점을 확인할 수 있습니다.');put('logs-error',trace==='trace-search'?'선택한 검색 요청에는 오류 응답이 없습니다.':el('logs-protocol').value==='rest'?'주문 요청의 예시 응답 · HTTP 504\n{"error":{"code":504,"status":"DEADLINE_EXCEEDED",\n "message":"결제 제공자 응답 시간 초과"}}':'주문 요청의 예시 응답 · gRPC status: DEADLINE_EXCEEDED (4)\nmessage: 결제 제공자 응답 시간 초과');put('logs-status',`${trace==='all'?'전체 요청':trace} · 이벤트 ${selected.length}건. 로그 형식과 클라이언트 응답은 같은 오류의 서로 다른 표현입니다.`);}
-  ['logs-trace','logs-format','logs-protocol'].forEach(id=>el(id).addEventListener('change',renderLogs));el('logs-reset').addEventListener('click',()=>{el('logs-trace').value='all';el('logs-format').value='raw';el('logs-protocol').value='rest';renderLogs();wizards.logs(0);});renderLogs();
+  const events=[
+    {service:'checkout-api',trace:'trace-order',span:'span-01',message:'결제 요청',level:'info',raw:'[checkout-api] INFO 결제 요청 | traceId=trace-order spanId=span-01'},
+    {service:'search-api',trace:'trace-search',span:'span-02',message:'상품 검색 완료',level:'info',raw:'service=search-api severity=INFO trace=trace-search span=span-02 msg="상품 검색 완료"'},
+    {service:'payment-api',trace:'trace-order',span:'span-03',message:'결제 제공자 응답 시간 초과',level:'error',raw:'{"svc":"payment-api","lvl":"ERROR","trace_id":"trace-order","span_id":"span-03","msg":"결제 제공자 응답 시간 초과"}'}
+  ];
+  function renderLogs(){
+    const trace=el('logs-trace').value, standardized=el('logs-format').value==='ecs';
+    const selected=events.filter(e=>trace==='all'||e.trace===trace);
+    put('logs-before',events.map(e=>e.raw).join('\n\n'));
+    put('logs-count',`이벤트 ${selected.length}건`);
+    put('logs-output',selected.map(e=>standardized?JSON.stringify({'service.name':e.service,'trace.id':e.trace,'span.id':e.span,'log.level':e.level,message:e.message},null,2):e.raw).join('\n\n'));
+    put('logs-explanation',trace==='trace-order'?'주문 서비스와 결제 서비스의 두 이벤트가 같은 요청입니다. 결제 서비스에서 응답 시간 초과가 발생한 흐름을 볼 수 있습니다.':trace==='trace-search'?'검색 요청은 trace-search로 별도 처리되었고 예시 로그에는 오류가 없습니다.':'서로 다른 요청이 섞여 있습니다. 주문 요청을 선택해 같은 trace.id를 가진 이벤트를 모아 보세요.');
+    put('logs-error',trace==='trace-search'?'선택한 검색 요청에는 오류 응답이 없습니다.':el('logs-protocol').value==='rest'?'주문 요청의 예시 응답 · HTTP 504\n{"error":{"code":504,"status":"DEADLINE_EXCEEDED",\n "message":"결제 제공자 응답 시간 초과"}}':'주문 요청의 예시 응답 · gRPC status: DEADLINE_EXCEEDED (4)\nmessage: 결제 제공자 응답 시간 초과');
+    put('logs-status',`${standardized?'공통 형식':'서비스별 형식'} · ${trace==='all'?'전체 요청':trace} · 이벤트 ${selected.length}건. 가상 데이터입니다.`);
+  }
+  ['logs-trace','logs-format','logs-protocol'].forEach(id=>el(id).addEventListener('change',renderLogs));
+  el('logs-apply').addEventListener('click',()=>{el('logs-format').value='ecs';renderLogs();wizards.logs(2);});
+  el('logs-reset').addEventListener('click',()=>{el('logs-trace').value='all';el('logs-format').value='raw';el('logs-protocol').value='rest';renderLogs();wizards.logs(0);});renderLogs();
   root.querySelector('[data-demo-app]').hidden=false;
 })();
