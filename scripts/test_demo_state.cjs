@@ -10,7 +10,7 @@ for(const kind of ['schema','dml','unknown','none']) {
   check(dbResult(kind,state).verdict==='PASS'&&dbResult(kind,state).pending===1&&!dbResult(kind,state).ready,kind+': PASS alone is insufficient');
   state.answer='vague';check(!dbResult(kind,state).ready,'approval text is not a resolved answer');state.applied=true;check(dbResult(kind,state).ready,'only re-reviewed facts resolve requester');state.applied=false;check(!dbResult(kind,state).ready,'edited answers invalidate completion');
 }
-const r={repo:'checkout-api',date:'2026-11-03',note:'',linked:'missing'};
-check(releaseCheck(r).checks.filter(c=>!c.ok).length===3,'missing fields, ticket and duplicate detected independently');
-r.note='Test';r.linked='ready';check(!releaseCheck(r).ready,'valid required fields cannot bypass duplicate');r.repo='catalog-api';check(releaseCheck(r).ready,'distinct repository passes');r.date='';check(!releaseCheck(r).ready,'missing date never passes');
+check(releaseCheck('ready').ready,'prepared development ticket passes');
+check(!releaseCheck('missing').ready,'missing development ticket blocks DCR');
+check(!releaseCheck('incomplete').ready,'missing control information blocks DCR');
 console.log(`PASS: ${checks} policy checks`);

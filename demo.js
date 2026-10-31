@@ -14,14 +14,7 @@
     if (kind==='unknown'&&!state.sourceFixed) return {verdict:'미실행',pending:null,ready:false,type:'unknown'};
     return {verdict:'PASS',pending:state.applied?0:1,ready:state.applied,type:'review'};
   }
-  function releaseCheck(request) {
-    const checks=[
-      {ok:!!request.note.trim()&&!!request.date,label:'필수값',detail:'변경 내용과 배포 예정일을 입력하세요.'},
-      {ok:request.linked==='ready',label:'작업 티켓',detail:request.linked==='missing'?'작업 티켓 연결이 필요합니다.':'연결된 티켓이 배포 준비 상태여야 합니다.'},
-      {ok:!(request.repo==='checkout-api'&&request.date==='2026-11-03'),label:'중복 요청',detail:'같은 저장소·날짜의 가상 요청 REL-DEMO-01이 있습니다. 일정을 조율하세요.'}
-    ];
-    return {checks,ready:checks.every(c=>c.ok)};
-  }
+  function releaseCheck(linked){ return {ready:linked==='ready', message:linked==='missing'?'상위 개발 티켓을 PR에 연결하세요.':linked==='incomplete'?'개발 티켓의 필수 통제 정보를 보완하세요.':'개발 티켓과 필수 통제 정보를 확인했습니다.'}; }
   if(typeof module!=='undefined'&&module.exports) module.exports={blank,dbResult,releaseCheck};
   if(typeof document==='undefined') return;
   const root=document.getElementById('demo');
@@ -99,16 +92,22 @@
   el('dbq-next').addEventListener('click',()=>{if(!dbResult(kind(),current()).ready)return;current().next++;renderDB();put('dbq-status',el('dbq-next-result').textContent);});
   el('dbq-reset').addEventListener('click',()=>{states[key()]=blank();renderDB();put('dbq-status','현재 경로·예시만 초기화했습니다.');wizards.dbq(0);});
   renderDB();
-  el('release-form').addEventListener('submit',event=>{
-    event.preventDefault();const request={repo:el('release-repo').value,date:el('release-date').value,note:el('release-note').value,linked:el('release-linked').value};const result=releaseCheck(request);
-    list('release-results',result.checks.map(c=>`${c.ok?'통과':'보완'} · ${c.label}: ${c.ok?'예시 기준 충족':c.detail}`));
-    put('release-notice',`[가상 알림 미리보기]\n${request.repo} / ${request.date||'날짜 미입력'}\n${result.ready?'요청 검증 통과 · 승인 절차 대기':'배포 요청 보완 필요'}\n${request.note||'변경 내용 미입력'}`);
-    wizards.release(1);feedback('release-status',result.ready?'검증 통과: 필수값·티켓·중복을 모두 확인했습니다. 실제 승인·배포는 진행하지 않았습니다.':`보완 ${result.checks.filter(c=>!c.ok).length}건: ${result.checks.filter(c=>!c.ok).map(c=>c.label).join(' · ')}. 이전 단계에서 보완하고 다시 검증해 보세요.`);
-  });
-  function clearRelease(){list('release-results',['입력 변경 · 다시 검증이 필요합니다.']);put('release-notice','현재 입력에 대한 검증·알림 미리보기 없음');put('release-status','입력이 변경되어 이전 검증 결과를 폐기했습니다.');}
-  el('release-form').addEventListener('input',clearRelease);el('release-form').addEventListener('change',clearRelease);
-  el('release-example').addEventListener('click',()=>{el('release-repo').value='catalog-api';el('release-date').value='2026-11-03';el('release-note').value='결제 오류 메시지 개선';el('release-linked').value='ready';clearRelease();feedback('release-status','가상 보완 내용을 채웠습니다. ‘요청 검증’을 다시 눌러 결과를 비교하세요.');});
-  el('release-reset').addEventListener('click',()=>{el('release-form').reset();clearRelease();wizards.release(0);});
+  let release={pr:false,checked:false,dcr:false,notified:false,approved:false};
+  function renderRelease(){
+    el('release-check').disabled=!release.pr;el('release-create').disabled=!release.checked;
+    el('release-approve').disabled=!release.notified||release.approved;
+    list('release-results',[release.checked?'통과 · 개발 티켓과 필수 통제 정보 확인':release.pr?'검사 대기 · PR 연결 정보 확인 필요':'PR 생성 전']);
+    put('release-dcr',release.dcr?'가상 DCR-DEMO-01 생성 · 개발 티켓과 PR 연결\n상태: '+(release.approved?'승인됨':'승인 대기'):'DCR 생성 전');
+    put('release-notice',release.approved?'승인자 선택 완료 → 가상 Jira 승인 상태 전환':release.notified?'가상 Slack 승인 요청 전달 · 승인자 응답 대기':'승인 요청 전');
+  }
+  function resetRelease(){release={pr:false,checked:false,dcr:false,notified:false,approved:false};renderRelease();put('release-gate-result','확인 전');}
+  el('release-linked').addEventListener('change',()=>{resetRelease();put('release-status','입력이 바뀌어 이전 PR과 승인 예시를 초기화했습니다.');});
+  el('release-pr').addEventListener('click',()=>{resetRelease();release.pr=true;renderRelease();put('release-status','가상 PR을 생성했습니다. GitHub 검사 단계에서 확인하세요.');wizards.release(1);});
+  el('release-check').addEventListener('click',()=>{const result=releaseCheck(el('release-linked').value);if(!result.ready){list('release-results',['보완 필요 · '+result.message]);put('release-status',result.message+' 이전 단계로 돌아가 보완하세요.');return;}release.checked=true;release.dcr=true;release.notified=true;renderRelease();wizards.release(2);feedback('release-status','GitHub 검사 통과 · 가상 DCR 생성과 승인 요청이 자동으로 이어졌습니다.');});
+  el('release-create').addEventListener('click',()=>{if(!release.checked)return;renderRelease();put('release-status','가상 Slack 승인 요청을 전달했습니다. 승인자 응답을 기다립니다.');wizards.release(3);});
+  el('release-approve').addEventListener('click',()=>{if(!release.notified)return;release.approved=true;renderRelease();put('release-status','승인자 선택을 처리해 가상 Jira 승인 상태로 전환했습니다.');wizards.release(4);});
+  el('release-gate').addEventListener('click',()=>{put('release-gate-result',release.approved?'통과 · 가상 배포 범위의 DCR 승인 확인\n실제 배포는 실행하지 않습니다.':'차단 · 가상 DCR 승인 정보가 없습니다.');put('release-status',release.approved?'가상 배포 게이트 통과.':'승인 전이므로 가상 배포를 차단했습니다.');});
+  el('release-reset').addEventListener('click',()=>{el('release-linked').value='ready';resetRelease();put('release-status','가상 예시를 처음부터 시작합니다.');wizards.release(0);});renderRelease();
   const events=[
     {service:'checkout-api',trace:'trace-order',span:'span-01',message:'결제 요청',level:'info',raw:'[checkout-api] INFO 결제 요청 | traceId=trace-order spanId=span-01'},
     {service:'search-api',trace:'trace-search',span:'span-02',message:'상품 검색 완료',level:'info',raw:'service=search-api severity=INFO trace=trace-search span=span-02 msg="상품 검색 완료"'},
