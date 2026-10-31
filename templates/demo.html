@@ -33,7 +33,7 @@
       <ol class="flow-strip" aria-label="QA 작업 흐름"><li>명세 인터뷰 · 선택</li><li>문서·코드 → TC 생성</li><li>카드 리뷰 · 확정</li><li>실행 · 결과</li></ol>
       <div class="demo-layout"><div class="demo-source">
         <h4>1 / 가상 프로젝트: 구독 취소</h4><p class="demo-small">입력 자료: 가상 기획 문서 · 화면 설계 · 변경 코드. 취소 시 상태 변경은 명시되어 있지만 환불 정책의 근거는 확인이 필요합니다.</p>
-        <label for="qa-interview">선택적 명세 인터뷰 · 환불 정책을 확인했나요?</label>
+        <details class="qa-policy"><summary>인터뷰에 사용할 가상 정책 보기</summary><p>샘플 정책: 구독을 취소할 때 환불 대상 여부와 예상 금액을 안내합니다.</p></details><label for="qa-interview">선택적 명세 인터뷰 · 환불 정책을 확인했나요?</label>
         <select id="qa-interview"><option value="unknown">모름 · 미확인으로 남기기</option><option value="fact">가상 정책 자료를 확인함</option></select>
         <button id="qa-record" type="button">인터뷰 답변 기록</button><p id="qa-interview-state" class="demo-small">인터뷰를 건너뛰어도 TC 생성이 가능합니다.</p>
         <div class="demo-actions"><button id="qa-generate" class="primary" type="button">2. TC 초안 생성</button><button id="qa-review" type="button" disabled>3. 카드 리뷰 열기</button></div>
