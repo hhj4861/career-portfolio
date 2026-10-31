@@ -29,11 +29,23 @@
       <details class="architecture"><summary>실제 구조에서 데모가 보여주는 범위</summary><ul><li>로컬은 사용자가 명시적으로 요청합니다. 코드를 편집하거나 커밋했다는 이유만으로 검수를 시작하지 않습니다.</li><li>AI의 SQL 도출 결과와 Remote MCP 코어 판정은 다릅니다. 불확실한 SQL은 소스 보완이 필요합니다.</li><li>개발자 질문과 DBA의 승인 전·실행 전 확인을 구분합니다. ‘승인합니다’라는 말로 업무 근거를 대신하지 않습니다.</li><li>DDL은 코딩 가이드, DML은 최신 검수의 티켓 미리보기와 생성 동의로 이어집니다. PR 검수는 별도 실행이며 이전 로컬 PASS를 복사하지 않습니다.</li></ul></details>
     </section>
     <section id="panel-qa" role="tabpanel" aria-labelledby="tab-qa" tabindex="0" hidden>
-      <header class="workbench-header"><div><h3>QA · 생성된 테스트도 검토가 필요하다</h3><p>요구사항 수집 → TC 초안 → 교차 검토 → 웹·모바일 실행. 빠진 시나리오와 실행 실패를 직접 보완하세요.</p></div><a class="text-link" href="#qa-platform">업무 배경 ↑</a></header>
-      <div class="demo-layout"><div class="demo-source"><label class="demo-check"><input id="qa-requirement" type="checkbox" checked><span>요구사항에 ‘취소 후 재시도’ 흐름 포함</span></label><pre class="demo-code">가상 PRD: 주문 결제
-· 결제 성공 시 주문 완료
-· 결제 거절 시 오류 안내
-· [선택] 취소 후 다시 결제 가능</pre><p class="demo-small">요구사항을 바꾸면 기존 TC·검토·실행 결과를 초기화합니다.</p><div class="demo-actions"><button id="qa-generate" class="primary" type="button">1. TC 초안 생성</button><button id="qa-review" type="button" disabled>2. 교차 검토</button><button id="qa-fix" type="button" disabled>3. 빠진 TC 보완</button></div><label for="qa-target">실행 대상</label><select id="qa-target"><option value="web">웹 · Playwright</option><option value="mobile">모바일 · Appium</option></select><div class="demo-actions"><button id="qa-run" type="button" disabled>4. 테스트 실행</button><button id="qa-retry" type="button" disabled>5. 실패 보완 후 재실행</button><button id="qa-reset" type="button">초기화</button></div><p id="qa-status" class="demo-feedback" role="status" aria-live="polite" aria-atomic="true">먼저 ‘1. TC 초안 생성’을 눌러 주세요. 나머지 단계는 순서대로 활성화됩니다.</p></div><div class="demo-review"><h4>TC와 실행 기록</h4><ul id="qa-cases"><li>아직 생성된 TC가 없습니다.</li></ul><p id="qa-review-result" class="demo-small">교차 검토 대기</p><pre id="qa-output" class="demo-code">실행 대기</pre><p class="demo-small">초안의 누락과 네트워크 대기 실패를 미리 정한 가상 결과로 재현합니다. 실제 LLM·브라우저·기기 테스트를 실행하지 않습니다.</p></div></div>
+      <header class="workbench-header"><div><h3>QA 자동화 · 문서에서 검토와 실행까지</h3><p>선택적 명세 인터뷰, TC 생성, 사람의 카드 검토, 플랫폼별 실행과 결과 보고를 가상 프로젝트로 체험해 보세요.</p></div><a class="text-link" href="#qa-platform">업무 배경 ↑</a></header>
+      <ol class="flow-strip" aria-label="QA 작업 흐름"><li>명세 인터뷰 · 선택</li><li>문서·코드 → TC 생성</li><li>카드 리뷰 · 확정</li><li>실행 · 결과</li></ol>
+      <div class="demo-layout"><div class="demo-source">
+        <h4>1 / 가상 프로젝트: 구독 취소</h4><p class="demo-small">입력 자료: 가상 기획 문서 · 화면 설계 · 변경 코드. 취소 시 상태 변경은 명시되어 있지만 환불 정책의 근거는 확인이 필요합니다.</p>
+        <label for="qa-interview">선택적 명세 인터뷰 · 환불 정책을 확인했나요?</label>
+        <select id="qa-interview"><option value="unknown">모름 · 미확인으로 남기기</option><option value="fact">가상 정책 자료를 확인함</option></select>
+        <button id="qa-record" type="button">인터뷰 답변 기록</button><p id="qa-interview-state" class="demo-small">인터뷰를 건너뛰어도 TC 생성이 가능합니다.</p>
+        <div class="demo-actions"><button id="qa-generate" class="primary" type="button">2. TC 초안 생성</button><button id="qa-review" type="button" disabled>3. 카드 리뷰 열기</button></div>
+        <p id="qa-status" class="demo-feedback" role="status" aria-live="polite" aria-atomic="true">가상 답변을 선택하거나 인터뷰를 건너뛰고 ‘TC 초안 생성’을 눌러 주세요.</p>
+        <div class="qa-review-actions" id="qa-actions" hidden><h4>3 / 카드별 검토</h4><p class="demo-small">정상 TC는 승인하세요. 미완성 TC는 보완 후 근거를 확증하거나 이번 실행에서 제외할 수 있습니다.</p>
+          <div class="demo-actions"><button id="qa-approve-ready" type="button">TC 1 승인</button><button id="qa-fix" type="button">TC 2 보완 제안 적용</button></div>
+          <details class="qa-policy"><summary>가상 정책 근거 보기</summary><p>샘플 정책: 구독을 취소할 때 환불 대상 여부와 예상 금액을 안내합니다.</p></details><label class="demo-check"><input id="qa-evidence" type="checkbox" disabled><span>가상 정책 자료를 읽고 TC 2의 기대 결과를 직접 확인했습니다</span></label>
+          <div class="demo-actions"><button id="qa-approve-fixed" type="button" disabled>TC 2 승인</button><button id="qa-exclude" type="button">TC 2 이번 실행에서 제외</button><button id="qa-confirm" type="button" disabled>리뷰 확정</button></div><p id="qa-gate-hint" class="demo-small"></p>
+        </div>
+        <div id="qa-execution" hidden><h4>4 / 실행과 결과</h4><label for="qa-target">실행 대상</label><select id="qa-target"><option value="web">웹 · Playwright</option><option value="android">Android · Appium</option><option value="ios">iOS · 모바일 자동화</option></select><div class="demo-actions"><button id="qa-run" type="button">가상 E2E 실행</button><button id="qa-retry" type="button" disabled>실패한 TC 재실행</button></div><p class="demo-small">확정된 TC만 실행 대상으로 사용합니다. 결과는 가상 데이터입니다.</p></div>
+        <button id="qa-reset" type="button">프로젝트 초기화</button>
+      </div><div class="demo-review"><h4>TC 카드와 실행 결과</h4><p id="qa-review-result" class="demo-small">TC 생성 전</p><div id="qa-cases"><p>아직 생성된 TC가 없습니다.</p></div><h4>실행 리포트</h4><pre id="qa-output" class="demo-code">리뷰 확정 후 실행할 수 있습니다.</pre><p class="demo-small">실제 AI·기기 테스트·외부 서비스에 연결하지 않는 포트폴리오용 시뮬레이션입니다. 품질 판정은 설명을 위한 간단한 예시입니다.</p></div></div>
     </section>
     <section id="panel-release" role="tabpanel" aria-labelledby="tab-release" tabindex="0" hidden>
       <header class="workbench-header"><div><h3>배포 요청 · 필수값과 연결 관계를 함께 확인하다</h3><p>필드를 채웠더라도 연결 티켓의 상태나 같은 날의 중복 배포가 남을 수 있습니다.</p></div><a class="text-link" href="#release-validation">업무 배경 ↑</a></header>

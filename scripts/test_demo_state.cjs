@@ -13,5 +13,8 @@ for(const kind of ['schema','dml','unknown','none']) {
 const r={repo:'checkout-api',date:'2026-11-03',note:'',linked:'missing'};
 check(releaseCheck(r).checks.filter(c=>!c.ok).length===3,'missing fields, ticket and duplicate detected independently');
 r.note='Test';r.linked='ready';check(!releaseCheck(r).ready,'valid required fields cannot bypass duplicate');r.repo='catalog-api';check(releaseCheck(r).ready,'distinct repository passes');r.date='';check(!releaseCheck(r).ready,'missing date never passes');
-check(!qaGate({generated:true,reviewed:false}), 'review required');check(!qaGate({generated:true,reviewed:true,requirement:true,fixed:false}),'missing requirement case blocks execution');check(qaGate({generated:true,reviewed:true,requirement:true,fixed:true}),'fixed coverage enables execution');
+check(!qaGate({generated:true,reviewed:false}), 'review required');
+check(!qaGate({generated:true,reviewed:true,readyApproved:true,fixedApproved:false,excluded:false}),'unresolved card blocks confirmation');
+check(qaGate({generated:true,reviewed:true,readyApproved:true,fixedApproved:true,excluded:false}),'both approved cards enable confirmation');
+check(qaGate({generated:true,reviewed:true,readyApproved:true,fixedApproved:false,excluded:true}),'explicit exclusion enables confirmation');
 console.log(`PASS: ${checks} policy checks`);
