@@ -30,6 +30,7 @@
   root.dataset.initialized='true';
   const el=id=>root.querySelector('#'+id);
   const put=(id,text)=>{el(id).textContent=text;};
+  const feedback=(id,text)=>{put(id,text);el(id).scrollIntoView({block:'nearest',behavior:'instant'});};
   const node=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;return n;};
   const list=(id,items)=>el(id).replaceChildren(...items.map(s=>node('li',s)));
   const tabs=[...root.querySelectorAll('[data-tab]')];
@@ -92,23 +93,23 @@
     put('qa-output',!qa.ran?'실행 대기':`${runner} / 가상 실행\nTC-01 PASS\nTC-02 ${qa.retried?'PASS · 상태 대기 조건 보완':'FAIL · 오류 메시지 표시 전에 검사'}${qa.fixed?'\nTC-03 PASS':''}\n${qa.retried?'이번 예시 전체 통과\n이전 실행: TC-02 FAIL · 응답 대기 조건 누락':'실패 원인: 응답 대기 조건 누락'}`);
   }
   const invalidateQA=()=>{qa={generated:false,reviewed:false,fixed:false,requirement:el('qa-requirement').checked,ran:false,retried:false};renderQA();};
-  el('qa-requirement').addEventListener('change',()=>{invalidateQA();put('qa-status','요구사항 변경: 이전 TC와 결과를 초기화했습니다.');});
-  el('qa-generate').addEventListener('click',()=>{invalidateQA();qa.generated=true;renderQA();put('qa-status','TC 2개 생성 완료. 다음으로 ‘2. 교차 검토’를 누르세요. 결과는 오른쪽 또는 아래의 ‘TC와 실행 기록’에서 확인할 수 있습니다.');});
-  el('qa-review').addEventListener('click',()=>{qa.reviewed=true;renderQA();put('qa-status',qa.requirement&&!qa.fixed?'취소 후 재시도 TC가 빠졌습니다. 다음으로 ‘3. 빠진 TC 보완’을 누르세요.':'검토 완료. 다음으로 ‘4. 테스트 실행’을 누르세요.');});
-  el('qa-fix').addEventListener('click',()=>{qa.fixed=true;qa.ran=false;qa.retried=false;renderQA();put('qa-status','취소·재시도 TC를 추가했습니다. 다음으로 ‘4. 테스트 실행’을 누르세요.');});
-  el('qa-run').addEventListener('click',()=>{if(!qaGate(qa))return;qa.ran=true;qa.retried=false;renderQA();put('qa-status','가상 실행 결과: 2번 TC 실패. 다음으로 ‘5. 실패 보완 후 재실행’을 눌러 비교하세요.');});
-  el('qa-retry').addEventListener('click',()=>{if(!qa.ran)return;qa.retried=true;renderQA();put('qa-status','대기 조건을 보완한 재실행 예시가 통과했습니다. 최초 실패 기록은 실행 설명에 남깁니다.');});
-  el('qa-target').addEventListener('change',()=>{qa.ran=false;qa.retried=false;renderQA();put('qa-status','실행 대상을 바꿨습니다. 기존 대상의 성공을 새 대상에 재사용하지 않습니다.');});
-  el('qa-reset').addEventListener('click',()=>{el('qa-requirement').checked=true;el('qa-target').value='web';invalidateQA();put('qa-status','초기화했습니다. ‘1. TC 초안 생성’부터 다시 시작하세요.');});renderQA();
+  el('qa-requirement').addEventListener('change',()=>{invalidateQA();feedback('qa-status','요구사항 변경: 이전 TC와 결과를 초기화했습니다.');});
+  el('qa-generate').addEventListener('click',()=>{invalidateQA();qa.generated=true;renderQA();feedback('qa-status','TC 2개 생성 완료. 다음으로 ‘2. 교차 검토’를 누르세요. 결과는 오른쪽 또는 아래의 ‘TC와 실행 기록’에서 확인할 수 있습니다.');});
+  el('qa-review').addEventListener('click',()=>{qa.reviewed=true;renderQA();feedback('qa-status',qa.requirement&&!qa.fixed?'취소 후 재시도 TC가 빠졌습니다. 다음으로 ‘3. 빠진 TC 보완’을 누르세요.':'검토 완료. 다음으로 ‘4. 테스트 실행’을 누르세요.');});
+  el('qa-fix').addEventListener('click',()=>{qa.fixed=true;qa.ran=false;qa.retried=false;renderQA();feedback('qa-status','취소·재시도 TC를 추가했습니다. 다음으로 ‘4. 테스트 실행’을 누르세요.');});
+  el('qa-run').addEventListener('click',()=>{if(!qaGate(qa))return;qa.ran=true;qa.retried=false;renderQA();feedback('qa-status','가상 실행 결과: 2번 TC 실패. 다음으로 ‘5. 실패 보완 후 재실행’을 눌러 비교하세요.');});
+  el('qa-retry').addEventListener('click',()=>{if(!qa.ran)return;qa.retried=true;renderQA();feedback('qa-status','대기 조건을 보완한 재실행 예시가 통과했습니다. 최초 실패 기록은 실행 설명에 남깁니다.');});
+  el('qa-target').addEventListener('change',()=>{qa.ran=false;qa.retried=false;renderQA();feedback('qa-status','실행 대상을 바꿨습니다. 기존 대상의 성공을 새 대상에 재사용하지 않습니다.');});
+  el('qa-reset').addEventListener('click',()=>{el('qa-requirement').checked=true;el('qa-target').value='web';invalidateQA();feedback('qa-status','초기화했습니다. ‘1. TC 초안 생성’부터 다시 시작하세요.');});renderQA();
   el('release-form').addEventListener('submit',event=>{
     event.preventDefault();const request={repo:el('release-repo').value,date:el('release-date').value,note:el('release-note').value,linked:el('release-linked').value};const result=releaseCheck(request);
     list('release-results',result.checks.map(c=>`${c.ok?'통과':'보완'} · ${c.label}: ${c.ok?'예시 기준 충족':c.detail}`));
     put('release-notice',`[가상 알림 미리보기]\n${request.repo} / ${request.date||'날짜 미입력'}\n${result.ready?'요청 검증 통과 · 승인 절차 대기':'배포 요청 보완 필요'}\n${request.note||'변경 내용 미입력'}`);
-    put('release-status',result.ready?'검증 통과: 필수값·티켓·중복을 모두 확인했습니다. 실제 승인·배포는 진행하지 않았습니다.':`보완 ${result.checks.filter(c=>!c.ok).length}건: ${result.checks.filter(c=>!c.ok).map(c=>c.label).join(' · ')}. ‘2. 보완된 예시 채우기’ 후 다시 검증해 보세요.`);
+    feedback('release-status',result.ready?'검증 통과: 필수값·티켓·중복을 모두 확인했습니다. 실제 승인·배포는 진행하지 않았습니다.':`보완 ${result.checks.filter(c=>!c.ok).length}건: ${result.checks.filter(c=>!c.ok).map(c=>c.label).join(' · ')}. ‘2. 보완된 예시 채우기’ 후 다시 검증해 보세요.`);
   });
   function clearRelease(){list('release-results',['입력 변경 · 다시 검증이 필요합니다.']);put('release-notice','현재 입력에 대한 검증·알림 미리보기 없음');put('release-status','입력이 변경되어 이전 검증 결과를 폐기했습니다.');}
   el('release-form').addEventListener('input',clearRelease);el('release-form').addEventListener('change',clearRelease);
-  el('release-example').addEventListener('click',()=>{el('release-repo').value='catalog-api';el('release-date').value='2026-11-03';el('release-note').value='결제 오류 메시지 개선';el('release-linked').value='ready';clearRelease();put('release-status','가상 보완 내용을 채웠습니다. ‘1. 요청 검증’을 다시 눌러 결과를 비교하세요.');});
+  el('release-example').addEventListener('click',()=>{el('release-repo').value='catalog-api';el('release-date').value='2026-11-03';el('release-note').value='결제 오류 메시지 개선';el('release-linked').value='ready';clearRelease();feedback('release-status','가상 보완 내용을 채웠습니다. ‘1. 요청 검증’을 다시 눌러 결과를 비교하세요.');});
   el('release-reset').addEventListener('click',()=>{el('release-form').reset();clearRelease();});
   const events=[{service:'checkout-api',trace:'trace-order',span:'span-01',message:'결제 요청',level:'info'},{service:'search-api',trace:'trace-search',span:'span-02',message:'상품 검색 완료',level:'info'},{service:'payment-api',trace:'trace-order',span:'span-03',message:'결제 제공자 응답 시간 초과',level:'error'}];
   function renderLogs(){const trace=el('logs-trace').value;const selected=events.filter(e=>trace==='all'||e.trace===trace);put('logs-count',`이벤트 ${selected.length}건`);put('logs-output',selected.map(e=>el('logs-format').value==='ecs'?JSON.stringify({'service.name':e.service,'trace.id':e.trace,'span.id':e.span,'log.level':e.level,message:e.message},null,2):`[${e.service}] ${e.level.toUpperCase()} ${e.message}\ntrace=${e.trace} span=${e.span}`).join('\n\n'));put('logs-explanation',trace==='trace-order'?'주문 서비스가 결제를 요청했고, 같은 trace-order를 가진 결제 서비스에서 응답 시간 초과가 발생했습니다. 서로 다른 서비스의 로그 두 건을 하나의 요청으로 연결한 결과입니다.':trace==='trace-search'?'검색 요청은 trace-search로 별도 처리되었고 예시 로그에는 오류가 없습니다. 주문 장애와는 다른 요청입니다.':'서로 다른 요청 2개가 섞여 있습니다. ‘주문 요청 · trace-order’를 선택하면 주문→결제의 연결과 오류 지점을 확인할 수 있습니다.');put('logs-error',trace==='trace-search'?'선택한 검색 요청에는 오류 응답이 없습니다.':el('logs-protocol').value==='rest'?'주문 요청의 예시 응답 · HTTP 504\n{"error":{"code":504,"status":"DEADLINE_EXCEEDED",\n "message":"결제 제공자 응답 시간 초과"}}':'주문 요청의 예시 응답 · gRPC status: DEADLINE_EXCEEDED (4)\nmessage: 결제 제공자 응답 시간 초과');put('logs-status',`${trace==='all'?'전체 요청':trace} · 이벤트 ${selected.length}건. 로그 형식과 클라이언트 응답은 같은 오류의 서로 다른 표현입니다.`);}

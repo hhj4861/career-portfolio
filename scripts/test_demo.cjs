@@ -13,9 +13,14 @@ const root=path.resolve(__dirname,'..');
     let base=process.env.BASE_URL;
     if(!base){server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://local').pathname;const target=path.resolve(root,'.'+pathname+(pathname.endsWith('/')?'index.html':''));if(!target.startsWith(root+path.sep)){res.writeHead(403).end();return;}try{res.setHeader('Content-Type',target.endsWith('.css')?'text/css':target.endsWith('.js')?'text/javascript':'text/html; charset=utf-8');res.end(fs.readFileSync(target));}catch{res.writeHead(404).end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));base=`http://127.0.0.1:${server.address().port}/`;}
     browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});
+    const mobile = await browser.newPage({viewport:{width:390,height:700},isMobile:true,hasTouch:true});
+    await mobile.goto(new URL('#demo',base).href,{waitUntil:'networkidle'});
+    await mobile.locator('[data-tab=qa]').click();await mobile.locator('#qa-generate').click();
+    check(await mobile.locator('#qa-status').evaluate(n=>{const r=n.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&n.textContent.includes('생성 완료');}),'Direct mobile demo link shows the first QA result in viewport');
+    await mobile.close();
     const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
     page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(base,{waitUntil:'networkidle'});await page.locator('[data-demo-app]').waitFor({state:'visible'});
+    await page.goto(new URL('#demo',base).href,{waitUntil:'networkidle'});await page.locator('[data-demo-app]').waitFor({state:'visible'});
     const interactionRequests=[];page.on('request',req=>interactionRequests.push(req.url()));
     const text=async id=>(await page.locator('#'+id).textContent()).trim();
     const click=id=>page.locator('#'+id).click();
